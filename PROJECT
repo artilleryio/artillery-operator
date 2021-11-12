@@ -1,0 +1,19 @@
+domain: artillery.io
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: artillery-operator
+repo: github.com/artilleryio/artillery-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: artillery.io
+  group: loadtest
+  kind: LoadTest
+  path: github.com/artilleryio/artillery-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
