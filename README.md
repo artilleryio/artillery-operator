@@ -64,7 +64,22 @@ make manifests
 
 These manifests are located in the `config` directory.
 
-#### Local build and publish
+#### Local development
+
+You can run the operator as a Go program outside of the cluster. This method is useful for development purposes to speed
+up deployment and testing.
+
+The following command installs the CRDs in the cluster configured in your `~/.kube/config` file and runs the Operator as
+a Go program locally:
+
+```shell
+make install run
+```
+
+#### Local deployment
+
+A new namespace is created with name <project-name>-system, ex. artillery-operator-system, and will be used for the
+deployment.
 
 The following command will build and push an operator image to the local registry `kind-registry` tagged as
 `kind-registry:5000/artillery-operator:v0.0.1`:
@@ -73,13 +88,8 @@ The following command will build and push an operator image to the local registr
 make docker-build docker-push IMG=kind-registry:5000/artillery-operator:<version>
 ```
 
-#### Local deployment
-
-A new namespace is created with name <project-name>-system, ex. artillery-operator-system, and will be used for the
-deployment.
-
-Run the following to deploy the operator to the K8s cluster specified in `~/.kube/config`. This will also install the
-RBAC manifests from config/rbac.
+Then, run the following to deploy the operator to the K8s cluster specified in `~/.kube/config`. This will also install
+the RBAC manifests from config/rbac.
 
 ```shell
 make deploy IMG=kind-registry:5000/artillery-operator:v0.0.1
@@ -100,7 +110,7 @@ apiVersion: loadtest.artillery.io/v1alpha1
 kind: LoadTest
 metadata:
   name: loadtest-sample
-  namespace: default
+  namespace: load-tester
 spec:
   # Add fields here
   count: 10
