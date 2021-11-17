@@ -76,6 +76,23 @@ spec:
             type: object
           status:
             description: LoadTestStatus defines the observed state of LoadTest
+            properties:
+              started:
+                type: boolean
+              workers:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                properties:
+                  pending:
+                    items:
+                      type: string
+                    type: array
+                  running:
+                    items:
+                      type: string
+                    type: array
+                type: object
             type: object
         type: object
     served: true
