@@ -19,12 +19,13 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	loadtestv1alpha1 "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
 )
 
 // LoadTestReconciler reconciles a LoadTest object
@@ -47,23 +48,42 @@ type LoadTestReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
 
 	logger := log.FromContext(ctx)
-	logger.Info("Reconcile loadtest", req.NamespacedName)
+	logger.WithValues("loadtest", req.NamespacedName.Name)
+	logger.Info("Reconciling load test")
 
-	instance := &loadtestv1alpha1.LoadTest{}
-	err := r.Client.Get(ctx, req.NamespacedName, instance)
+	loadTest := &lt.LoadTest{}
+	err := r.Client.Get(ctx, req.NamespacedName, loadTest)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			logger.Info("LoadTest resource not found. Ignoring since object must be deleted")
+			return ctrl.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		logger.Error(err, "Failed to get LoadTest")
 		return ctrl.Result{}, err
 	}
-	logger.Info("Reconciling\n", instance)
+
+	if !loadTest.Status.Started {
+		loadTest.Status.Started = true
+		if err := r.Status().Update(ctx, loadTest); err != nil {
+			logger.Error(err, "Failed to update LoadTest status")
+			return ctrl.Result{}, err
+		}
+	}
+
+	logger.Info("LoadTest Reconciled")
+
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&loadtestv1alpha1.LoadTest{}).
+		For(&lt.LoadTest{}).
 		Complete(r)
 }

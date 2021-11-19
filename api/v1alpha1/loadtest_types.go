@@ -61,10 +61,17 @@ type LoadTestSpec struct {
 	TestScript  TestScript `json:"testScript,omitempty"`
 }
 
+type Workers struct {
+	Running []string `json:"running,omitempty"`
+	Pending []string `json:"pending,omitempty"`
+}
+
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Workers Workers `json:"workers,omitempty"`
+	Started bool    `json:"started,omitempty"`
 }
 
 // +kubebuilder:object:root=true
