@@ -1,0 +1,14 @@
+{
+  "name": "loadtest-app",
+  "version": "0.0.1",
+  "description": "Target for the basic-loadtest-cr's testScript.",
+  "main": "app.js",
+  "scripts": {
+    "app:start": "node app.js"
+  },
+  "author": "artillery.io",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
