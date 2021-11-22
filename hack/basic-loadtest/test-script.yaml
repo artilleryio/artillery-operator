@@ -14,8 +14,8 @@
 config:
   target: "http://host.docker.internal:3000"
   phases:
-    - duration: 600
-      arrivalRate: 5
+    - duration: 60
+      arrivalRate: 3
 
 scenarios:
   # Approximately 60% of all VUs will access this scenario.

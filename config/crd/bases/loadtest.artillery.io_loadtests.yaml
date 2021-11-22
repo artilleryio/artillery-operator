@@ -77,7 +77,7 @@ spec:
           status:
             description: LoadTestStatus defines the observed state of LoadTest
             properties:
-              started:
+              active:
                 type: boolean
               workers:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
