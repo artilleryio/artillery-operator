@@ -53,8 +53,8 @@ type LoadTestReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.WithValues("LoadTest.Name", req.Name, "LoadTest.Name", req.Namespace)
-	logger.Info("Reconciling load test")
+	logger.WithValues("LoadTest.Name", req.Name, "LoadTest.Namespace", req.Namespace)
+	logger.Info("Reconciling LoadTest")
 
 	loadTest := &lt.LoadTest{}
 	err := r.Get(ctx, req.NamespacedName, loadTest)
@@ -63,7 +63,7 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			// Request object not foundJob, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			logger.Info("LoadTest resource not foundJob. Ignoring since object must be deleted")
+			logger.Info("LoadTest resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
