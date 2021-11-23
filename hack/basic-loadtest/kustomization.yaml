@@ -10,4 +10,4 @@ configMapGenerator:
       - test-script.yaml
 
 resources:
-  - basic-loadtest-cr.yaml
+  - basic-test-cr.yaml

@@ -1,11 +1,11 @@
 apiVersion: loadtest.artillery.io/v1alpha1
 kind: LoadTest
 metadata:
-  name: basic-loadtest
+  name: basic-test
   namespace: default
 spec:
   # Add fields here
-  count: 5
+  count: 2
   environment: dev
   testScript:
     config:
