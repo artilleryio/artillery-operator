@@ -26,17 +26,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-var (
-	parallelism      int32 = 1
-	completions      int32 = 1
-	backoffLimit     int32 = 0
-	containerImage         = "artilleryio/artillery:latest"
-	testScriptVolMnt       = "test-script"
 )
 
 // LoadTestReconciler reconciles a LoadTest object
@@ -102,8 +95,12 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
-	loadTest.Status.Active = foundJob.Status.Active > 0
-	if err := r.Status().Update(ctx, loadTest); err != nil {
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		loadTest.Status.Active = foundJob.Status.Active > 0
+		return r.Status().Update(ctx, loadTest)
+	})
+
+	if err != nil {
 		logger.Error(err, "Failed to update LoadTest status")
 		return ctrl.Result{}, err
 	}
@@ -122,6 +119,19 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *LoadTestReconciler) jobForLoadTest(loadTest *lt.LoadTest) (*batchv1.Job, error) {
+	var (
+		parallelism    int32 = 1
+		completions    int32 = 1
+		backoffLimit   int32 = 0
+		containerImage       = "artilleryio/artillery:latest"
+		testScriptVol        = "test-script"
+	)
+
+	if loadTest.Spec.Count > 0 {
+		parallelism = int32(loadTest.Spec.Count)
+		completions = int32(loadTest.Spec.Count)
+	}
+
 	var out = &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      loadTest.Name,
@@ -139,7 +149,7 @@ func (r *LoadTestReconciler) jobForLoadTest(loadTest *lt.LoadTest) (*batchv1.Job
 							Image: containerImage,
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      testScriptVolMnt,
+									Name:      testScriptVol,
 									MountPath: "/data",
 								},
 							},
@@ -151,7 +161,7 @@ func (r *LoadTestReconciler) jobForLoadTest(loadTest *lt.LoadTest) (*batchv1.Job
 					},
 					Volumes: []v1.Volume{
 						{
-							Name: testScriptVolMnt,
+							Name: testScriptVol,
 							VolumeSource: v1.VolumeSource{
 								ConfigMap: &v1.ConfigMapVolumeSource{
 									LocalObjectReference: v1.LocalObjectReference{
