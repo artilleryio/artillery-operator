@@ -1,3 +1,4 @@
+
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -15,94 +16,94 @@ spec:
     singular: loadtest
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          description: LoadTest is the Schema for the loadtests API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: LoadTest is the Schema for the loadtests API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: LoadTestSpec defines the desired state of LoadTest
-              properties:
-                count:
-                  type: integer
-                environment:
-                  type: string
-                testScript:
-                  properties:
-                    config:
-                      properties:
-                        configMap:
-                          type: string
-                      type: object
-                    external:
-                      properties:
-                        payload:
-                          properties:
-                            configMaps:
-                              items:
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LoadTestSpec defines the desired state of LoadTest
+            properties:
+              count:
+                type: integer
+              environment:
+                type: string
+              testScript:
+                properties:
+                  config:
+                    properties:
+                      configMap:
+                        type: string
+                    type: object
+                  external:
+                    properties:
+                      payload:
+                        properties:
+                          configMaps:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      processor:
+                        properties:
+                          main:
+                            properties:
+                              configMap:
                                 type: string
-                              type: array
-                          type: object
-                        processor:
-                          properties:
-                            main:
-                              properties:
-                                configMap:
+                            type: object
+                          related:
+                            properties:
+                              configMaps:
+                                items:
                                   type: string
-                              type: object
-                            related:
-                              properties:
-                                configMaps:
-                                  items:
-                                    type: string
-                                  type: array
-                              type: object
-                          type: object
-                      type: object
-                  type: object
-              type: object
-            status:
-              description: LoadTestStatus defines the observed state of LoadTest
-              properties:
-                active:
-                  type: boolean
-                workers:
-                  description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                                type: array
+                            type: object
+                        type: object
+                    type: object
+                type: object
+            type: object
+          status:
+            description: LoadTestStatus defines the observed state of LoadTest
+            properties:
+              active:
+                type: boolean
+              workers:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
-                  properties:
-                    pending:
-                      items:
-                        type: string
-                      type: array
-                    running:
-                      items:
-                        type: string
-                      type: array
-                  type: object
-              required:
-                - active
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: { }
+                properties:
+                  pending:
+                    items:
+                      type: string
+                    type: array
+                  running:
+                    items:
+                      type: string
+                    type: array
+                type: object
+            required:
+            - active
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: [ ]
-  storedVersions: [ ]
+  conditions: []
+  storedVersions: []
