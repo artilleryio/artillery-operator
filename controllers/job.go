@@ -7,6 +7,7 @@ import (
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
+	"github.com/thoas/go-funk"
 	v1 "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -131,7 +132,47 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		v.Status.Active = found.Status.Active > 0
+		var progressing lt.LoadTestCondition
+		var completed lt.LoadTestCondition
+
+		conditionsMap := conditionsMap(v.Status.Conditions)
+		progressing = conditionsMap[lt.LoadTestProgressing]
+
+		succeeded := found.Status.Succeeded
+		failed := found.Status.Failed
+		completions := succeeded + failed
+
+		if found.Status.Active == 0 && completions == 0 {
+			progressing.Status = core.ConditionUnknown
+		}
+
+		if found.Status.Active > completions {
+			progressing.Status = core.ConditionTrue
+		}
+
+		if found.Status.Active == 0 && (succeeded > 0 || failed > 0) {
+			progressing.Status = core.ConditionFalse
+			completed = lt.LoadTestCondition{
+				Type:               lt.LoadTestCompleted,
+				Status:             core.ConditionTrue,
+				LastTransitionTime: metav1.Now(),
+				LastProbeTime:      metav1.Now(),
+			}
+			if failed > 0 {
+				completed.Status = core.ConditionFalse
+			}
+			conditionsMap[lt.LoadTestCompleted] = completed
+		}
+
+		progressing.LastProbeTime = metav1.Now()
+		conditionsMap[lt.LoadTestProgressing] = progressing
+
+		v.Status.Conditions = funk.Map(conditionsMap, func(key lt.LoadTestConditionType, val lt.LoadTestCondition) lt.LoadTestCondition {
+			return val
+		}).([]lt.LoadTestCondition)
+
+		// v.Status.Active = found.Status.Active > 0
+
 		return r.Status().Update(ctx, v)
 	})
 	if err != nil {
@@ -140,4 +181,15 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 
 	// status updated successfully
 	return nil, nil
+}
+
+func conditionsMap(conditions []lt.LoadTestCondition) map[lt.LoadTestConditionType]lt.LoadTestCondition {
+	out := funk.ToMap(conditions, "Type").(map[lt.LoadTestConditionType]lt.LoadTestCondition)
+	if _, ok := out[lt.LoadTestProgressing]; !ok {
+		out[lt.LoadTestProgressing] = lt.LoadTestCondition{
+			Type:               lt.LoadTestProgressing,
+			LastTransitionTime: metav1.Now(),
+		}
+	}
+	return out
 }

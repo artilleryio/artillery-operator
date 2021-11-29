@@ -78,21 +78,41 @@ spec:
             description: LoadTestStatus defines the observed state of LoadTest
             properties:
               active:
-                type: boolean
-              workers:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
-                properties:
-                  pending:
-                    items:
+                type: boolean
+              conditions:
+                items:
+                  properties:
+                    lastProbeTime:
+                      description: Last time the condition was checked.
+                      format: date-time
                       type: string
-                    type: array
-                  running:
-                    items:
+                    lastTransitionTime:
+                      description: Last time the condition transit from one status
+                        to another.
+                      format: date-time
                       type: string
-                    type: array
-                type: object
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    reason:
+                      description: (brief) reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of job condition, Progressing, Complete or
+                        Failed.
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
             required:
             - active
             type: object

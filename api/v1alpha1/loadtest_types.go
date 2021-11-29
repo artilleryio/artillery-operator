@@ -16,7 +16,10 @@ limitations under the License.
 
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -61,17 +64,41 @@ type LoadTestSpec struct {
 	TestScript  TestScript `json:"testScript,omitempty"`
 }
 
-type Workers struct {
-	Running []string `json:"running,omitempty"`
-	Pending []string `json:"pending,omitempty"`
+type LoadTestConditionType string
+
+// These are valid conditions of a load-test.
+const (
+	// LoadTestProgressing means the load test's workers are executing tests against a test script target.
+	LoadTestProgressing LoadTestConditionType = "Progressing"
+	// LoadTestCompleted means the load test has completed its execution.
+	LoadTestCompleted LoadTestConditionType = "Completed"
+)
+
+type LoadTestCondition struct {
+	// Type of job condition, Progressing, Complete or Failed.
+	Type LoadTestConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status core.ConditionStatus `json:"status"`
+	// Last time the condition was checked.
+	// +optional
+	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
+	// Last time the condition transit from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	// (brief) reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+	// Human-readable message indicating details about last transition.
+	// +optional
+	Message string `json:"message,omitempty"`
 }
 
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Workers Workers `json:"workers,omitempty"`
-	Active  bool    `json:"active"`
+	Active     bool                `json:"active"`
+	Conditions []LoadTestCondition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
