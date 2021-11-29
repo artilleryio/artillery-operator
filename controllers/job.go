@@ -7,8 +7,8 @@ import (
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
-	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/batch/v1"
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,10 +27,10 @@ func (r *LoadTestReconciler) ensureJob(
 	ctx context.Context,
 	instance *lt.LoadTest,
 	logger logr.Logger,
-	job *batchv1.Job,
+	job *v1.Job,
 ) (*reconcile.Result, error) {
 
-	found := &batchv1.Job{}
+	found := &v1.Job{}
 	err := r.Get(ctx, types.NamespacedName{
 		Name:      job.Name,
 		Namespace: instance.Namespace,
@@ -58,7 +58,7 @@ func (r *LoadTestReconciler) ensureJob(
 	return nil, nil
 }
 
-func (r *LoadTestReconciler) job(v *lt.LoadTest) *batchv1.Job {
+func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 	var (
 		parallelism  int32 = 1
 		completions  int32 = 1
@@ -70,22 +70,22 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *batchv1.Job {
 		completions = int32(v.Spec.Count)
 	}
 
-	job := &batchv1.Job{
+	job := &v1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      v.Name,
 			Namespace: v.Namespace,
 		},
-		Spec: batchv1.JobSpec{
+		Spec: v1.JobSpec{
 			Parallelism:  &parallelism,
 			Completions:  &completions,
 			BackoffLimit: &backoffLimit,
-			Template: v1.PodTemplateSpec{
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
+			Template: core.PodTemplateSpec{
+				Spec: core.PodSpec{
+					Containers: []core.Container{
 						{
 							Name:  v.Name,
 							Image: workerImage,
-							VolumeMounts: []v1.VolumeMount{
+							VolumeMounts: []core.VolumeMount{
 								{
 									Name:      testScriptVol,
 									MountPath: "/data",
@@ -97,12 +97,12 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *batchv1.Job {
 							},
 						},
 					},
-					Volumes: []v1.Volume{
+					Volumes: []core.Volume{
 						{
 							Name: testScriptVol,
-							VolumeSource: v1.VolumeSource{
-								ConfigMap: &v1.ConfigMapVolumeSource{
-									LocalObjectReference: v1.LocalObjectReference{
+							VolumeSource: core.VolumeSource{
+								ConfigMap: &core.ConfigMapVolumeSource{
+									LocalObjectReference: core.LocalObjectReference{
 										Name: v.Spec.TestScript.Config.ConfigMap,
 									},
 								},
@@ -120,7 +120,7 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *batchv1.Job {
 }
 
 func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest) (*reconcile.Result, error) {
-	found := &batchv1.Job{}
+	found := &v1.Job{}
 	err := r.Get(ctx, types.NamespacedName{
 		Name:      v.Name,
 		Namespace: v.Namespace,

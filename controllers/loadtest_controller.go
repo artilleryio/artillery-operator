@@ -20,7 +20,7 @@ import (
 	"context"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
-	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -90,6 +90,6 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&lt.LoadTest{}).
-		Owns(&batchv1.Job{}).
+		Owns(&v1.Job{}).
 		Complete(r)
 }
