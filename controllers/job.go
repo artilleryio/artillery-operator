@@ -148,6 +148,10 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 
 		if found.Status.Active > completions {
 			progressing.Status = core.ConditionTrue
+			if v.Status.StartTime == nil {
+				now := metav1.Now()
+				v.Status.StartTime = &now
+			}
 		}
 
 		if found.Status.Active == 0 && (succeeded > 0 || failed > 0) {
@@ -158,8 +162,13 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 				LastTransitionTime: metav1.Now(),
 				LastProbeTime:      metav1.Now(),
 			}
+
+			now := metav1.Now()
+			v.Status.CompletionTime = &now
+
 			if failed > 0 {
 				completed.Status = core.ConditionFalse
+				v.Status.CompletionTime = nil
 			}
 			conditionsMap[lt.LoadTestCompleted] = completed
 		}
@@ -170,8 +179,6 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 		v.Status.Conditions = funk.Map(conditionsMap, func(key lt.LoadTestConditionType, val lt.LoadTestCondition) lt.LoadTestCondition {
 			return val
 		}).([]lt.LoadTestCondition)
-
-		// v.Status.Active = found.Status.Active > 0
 
 		return r.Status().Update(ctx, v)
 	})

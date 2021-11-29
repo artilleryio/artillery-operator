@@ -77,12 +77,16 @@ spec:
           status:
             description: LoadTestStatus defines the observed state of LoadTest
             properties:
-              active:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
-                type: boolean
+              completionTime:
+                description: Represents time when the loadtest was completed. It is
+                  not guaranteed to be set in happens-before order across separate
+                  operations. It is represented in RFC3339 form and is in UTC. The
+                  completion time is only set when the loadtest finishes successfully.
+                format: date-time
+                type: string
               conditions:
+                description: 'Important: Run "make" to regenerate code after modifying
+                  this file'
                 items:
                   properties:
                     lastProbeTime:
@@ -113,8 +117,12 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - active
+              startTime:
+                description: Represents time when the loadtest controller started
+                  processing a loadtest. It is represented in RFC3339 form and is
+                  in UTC.
+                format: date-time
+                type: string
             type: object
         type: object
     served: true

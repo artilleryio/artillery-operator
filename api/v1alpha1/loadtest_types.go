@@ -95,10 +95,20 @@ type LoadTestCondition struct {
 
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Active     bool                `json:"active"`
 	Conditions []LoadTestCondition `json:"conditions,omitempty"`
+
+	// Represents time when the loadtest controller started processing a loadtest.
+	// It is represented in RFC3339 form and is in UTC.
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// Represents time when the loadtest was completed. It is not guaranteed to
+	// be set in happens-before order across separate operations.
+	// It is represented in RFC3339 form and is in UTC.
+	// The completion time is only set when the loadtest finishes successfully.
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 }
 
 // +kubebuilder:object:root=true
