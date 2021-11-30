@@ -109,10 +109,17 @@ type LoadTestStatus struct {
 	// The completion time is only set when the loadtest finishes successfully.
 	// +optional
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// Formatted duration of time required to complete the load test.
+	Duration string `json:"duration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Duration",type="string",JSONPath=`.status.duration`
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="Worker Count",type=integer,JSONPath=`.spec.count`
+// +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environment`,priority=10
 
 // LoadTest is the Schema for the loadtests API
 type LoadTest struct {

@@ -16,7 +16,21 @@ spec:
     singular: loadtest
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.duration
+      name: Duration
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.count
+      name: Worker Count
+      type: integer
+    - jsonPath: .spec.environment
+      name: Environment
+      priority: 10
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: LoadTest is the Schema for the loadtests API
@@ -117,6 +131,10 @@ spec:
                   - type
                   type: object
                 type: array
+              duration:
+                description: Formatted duration of time required to complete the load
+                  test.
+                type: string
               startTime:
                 description: Represents time when the loadtest controller started
                   processing a loadtest. It is represented in RFC3339 form and is

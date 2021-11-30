@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
 	v1 "k8s.io/api/batch/v1"
+	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -79,7 +81,10 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return *result, err
 	}
 
-	logger.Info("LoadTest Reconciled")
+	// Track duration for progressing LoadTest
+	if loadTest.Status.CompletionTime == nil {
+		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+	}
 
 	// == Finish == == == == ==
 	// Everything went fine, don't requeue
@@ -91,5 +96,6 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&lt.LoadTest{}).
 		Owns(&v1.Job{}).
+		Owns(&core.Pod{}).
 		Complete(r)
 }

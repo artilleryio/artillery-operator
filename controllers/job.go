@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -179,6 +180,7 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 		v.Status.Conditions = funk.Map(conditionsMap, func(key lt.LoadTestConditionType, val lt.LoadTestCondition) lt.LoadTestCondition {
 			return val
 		}).([]lt.LoadTestCondition)
+		v.Status.Duration = loadTestDuration(v.Status)
 
 		return r.Status().Update(ctx, v)
 	})
@@ -199,4 +201,17 @@ func conditionsMap(conditions []lt.LoadTestCondition) map[lt.LoadTestConditionTy
 		}
 	}
 	return out
+}
+
+func loadTestDuration(status lt.LoadTestStatus) string {
+	var d string
+	switch {
+	case status.StartTime == nil:
+
+	case status.CompletionTime == nil:
+		d = duration.HumanDuration(time.Since(status.StartTime.Time))
+	default:
+		d = duration.HumanDuration(status.CompletionTime.Sub(status.StartTime.Time))
+	}
+	return d
 }
