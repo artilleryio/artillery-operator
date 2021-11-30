@@ -3,17 +3,19 @@ set -o errexit
 
 # full directory name of the script no matter where it is being called from
 script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-echo "script dir is ${script_dir}"
 
 # create registry container unless it already exists
 reg_name='kind-registry'
-reg_port='5000'
+reg_port='5001'
 running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)"
+echo "Inspected registry ${reg_name}:${reg_port}"
+
 if [ "${running}" != 'true' ]; then
   docker run \
     -d --restart=always -p "${reg_port}:5000" --name "${reg_name}" \
     registry:2
 fi
+echo "Ran registry ${reg_name}:${reg_port}"
 
 # create data directory to mount volumes - ignored by git and docker
 mkdir -p ${script_dir}/data

@@ -71,7 +71,7 @@ type LoadTestStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Workers Workers `json:"workers,omitempty"`
-	Started bool    `json:"started,omitempty"`
+	Active  bool    `json:"active"`
 }
 
 // +kubebuilder:object:root=true

@@ -20,6 +20,7 @@ testbin/*
 
 # Kind data volume mounts
 hack/kind/data
+hack/**/node_modules
 
 # editor and IDE paraphernalia
 .idea
