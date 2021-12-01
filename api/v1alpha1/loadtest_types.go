@@ -16,7 +16,10 @@ limitations under the License.
 
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -61,21 +64,62 @@ type LoadTestSpec struct {
 	TestScript  TestScript `json:"testScript,omitempty"`
 }
 
-type Workers struct {
-	Running []string `json:"running,omitempty"`
-	Pending []string `json:"pending,omitempty"`
+type LoadTestConditionType string
+
+// These are valid conditions of a load-test.
+const (
+	// LoadTestProgressing means the load test's workers are executing tests against a test script target.
+	LoadTestProgressing LoadTestConditionType = "Progressing"
+	// LoadTestCompleted means the load test has completed its execution.
+	LoadTestCompleted LoadTestConditionType = "Completed"
+)
+
+type LoadTestCondition struct {
+	// Type of job condition, Progressing, Complete or Failed.
+	Type LoadTestConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status core.ConditionStatus `json:"status"`
+	// Last time the condition was checked.
+	// +optional
+	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
+	// Last time the condition transit from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	// (brief) reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+	// Human-readable message indicating details about last transition.
+	// +optional
+	Message string `json:"message,omitempty"`
 }
 
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Workers Workers `json:"workers,omitempty"`
-	Active  bool    `json:"active"`
+	Conditions []LoadTestCondition `json:"conditions,omitempty"`
+
+	// Represents time when the loadtest controller started processing a loadtest.
+	// It is represented in RFC3339 form and is in UTC.
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// Represents time when the loadtest was completed. It is not guaranteed to
+	// be set in happens-before order across separate operations.
+	// It is represented in RFC3339 form and is in UTC.
+	// The completion time is only set when the loadtest finishes successfully.
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// Formatted duration of time required to complete the load test.
+	Duration string `json:"duration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Duration",type="string",JSONPath=`.status.duration`
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="Worker Count",type=integer,JSONPath=`.spec.count`
+// +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environment`,priority=10
 
 // LoadTest is the Schema for the loadtests API
 type LoadTest struct {
