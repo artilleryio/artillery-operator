@@ -3,6 +3,10 @@ kind: Kustomization
 
 generatorOptions:
   disableNameSuffixHash: true
+  labels:
+    "artillery.io/test-name": basic-test
+    "artillery.io/component": loadtest-config
+    "artillery.io/part-of": loadtest
 
 configMapGenerator:
   - name: basic-test-script

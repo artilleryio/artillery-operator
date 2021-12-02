@@ -77,12 +77,16 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      v.Name,
 			Namespace: v.Namespace,
+			Labels:    labels(v, "loadtest-worker-master"),
 		},
 		Spec: v1.JobSpec{
 			Parallelism:  &parallelism,
 			Completions:  &completions,
 			BackoffLimit: &backoffLimit,
 			Template: core.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels(v, "loadtest-worker"),
+				},
 				Spec: core.PodSpec{
 					Containers: []core.Container{
 						{
@@ -232,5 +236,13 @@ func loadTestCompletions(status lt.LoadTestStatus, jobCompletions, jobParallelis
 		return fmt.Sprintf("%d/1 of %d", status.Succeeded, parallelism)
 	} else {
 		return fmt.Sprintf("%d/1", status.Succeeded)
+	}
+}
+
+func labels(v *lt.LoadTest, component string) map[string]string {
+	return map[string]string{
+		"artillery.io/test-name": v.Name,
+		"artillery.io/component": component,
+		"artillery.io/part-of":   "loadtest",
 	}
 }
