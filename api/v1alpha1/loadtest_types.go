@@ -111,15 +111,33 @@ type LoadTestStatus struct {
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 
 	// Formatted duration of time required to complete the load test.
+	// This is calculated using StartTime and CompletionTime
 	Duration string `json:"duration,omitempty"`
+
+	// The number of actively running LoadTest worker pods.
+	Active int32 `json:"active,omitempty"`
+
+	// The number of LoadTest worker pods which reached phase Succeeded.
+	Succeeded int32 `json:"succeeded,omitempty"`
+
+	// The number of LoadTest worker pods which reached phase Failed.
+	Failed int32 `json:"failed,omitempty"`
+
+	// Formatted load test worker pod completions calculated from the underlying succeeded jobs vs configured
+	// job completions/parallelism
+	Completions string `json:"completions"`
+
+	// The image used to run the load tests
+	Image string `json:"image"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Completions",type="string",JSONPath=`.status.completions`
 // +kubebuilder:printcolumn:name="Duration",type="string",JSONPath=`.status.duration`
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:printcolumn:name="Worker Count",type=integer,JSONPath=`.spec.count`
-// +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environment`,priority=10
+// +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environment`
+// +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.status.image`,priority=10
 
 // LoadTest is the Schema for the loadtests API
 type LoadTest struct {
