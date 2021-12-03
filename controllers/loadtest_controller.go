@@ -83,7 +83,7 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// Track duration for progressing LoadTest
 	if loadTest.Status.CompletionTime == nil {
-		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	// == Finish == == == == ==

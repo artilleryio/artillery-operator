@@ -17,17 +17,20 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.completions
+      name: Completions
+      type: string
     - jsonPath: .status.duration
       name: Duration
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    - jsonPath: .spec.count
-      name: Worker Count
-      type: integer
     - jsonPath: .spec.environment
       name: Environment
+      type: string
+    - jsonPath: .status.image
+      name: Image
       priority: 10
       type: string
     name: v1alpha1
@@ -91,12 +94,20 @@ spec:
           status:
             description: LoadTestStatus defines the observed state of LoadTest
             properties:
+              active:
+                description: The number of actively running LoadTest worker pods.
+                format: int32
+                type: integer
               completionTime:
                 description: Represents time when the loadtest was completed. It is
                   not guaranteed to be set in happens-before order across separate
                   operations. It is represented in RFC3339 form and is in UTC. The
                   completion time is only set when the loadtest finishes successfully.
                 format: date-time
+                type: string
+              completions:
+                description: Formatted load test worker pod completions calculated
+                  from the underlying succeeded jobs vs configured job completions/parallelism
                 type: string
               conditions:
                 description: 'Important: Run "make" to regenerate code after modifying
@@ -133,7 +144,15 @@ spec:
                 type: array
               duration:
                 description: Formatted duration of time required to complete the load
-                  test.
+                  test. This is calculated using StartTime and CompletionTime
+                type: string
+              failed:
+                description: The number of LoadTest worker pods which reached phase
+                  Failed.
+                format: int32
+                type: integer
+              image:
+                description: The image used to run the load tests
                 type: string
               startTime:
                 description: Represents time when the loadtest controller started
@@ -141,6 +160,14 @@ spec:
                   in UTC.
                 format: date-time
                 type: string
+              succeeded:
+                description: The number of LoadTest worker pods which reached phase
+                  Succeeded.
+                format: int32
+                type: integer
+            required:
+            - completions
+            - image
             type: object
         type: object
     served: true

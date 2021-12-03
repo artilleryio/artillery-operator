@@ -3,6 +3,7 @@ package controllers
 //goland:noinspection SpellCheckingInspection
 import (
 	"context"
+	"fmt"
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
@@ -76,12 +77,16 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      v.Name,
 			Namespace: v.Namespace,
+			Labels:    labels(v, "loadtest-worker-master"),
 		},
 		Spec: v1.JobSpec{
 			Parallelism:  &parallelism,
 			Completions:  &completions,
 			BackoffLimit: &backoffLimit,
 			Template: core.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels(v, "loadtest-worker"),
+				},
 				Spec: core.PodSpec{
 					Containers: []core.Container{
 						{
@@ -139,15 +144,15 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 		conditionsMap := conditionsMap(v.Status.Conditions)
 		progressing = conditionsMap[lt.LoadTestProgressing]
 
-		succeeded := found.Status.Succeeded
-		failed := found.Status.Failed
-		completions := succeeded + failed
+		v.Status.Active = found.Status.Active
+		v.Status.Succeeded = found.Status.Succeeded
+		v.Status.Failed = found.Status.Failed
 
-		if found.Status.Active == 0 && completions == 0 {
+		if found.Status.Active == 0 && (v.Status.Succeeded+v.Status.Failed) == 0 {
 			progressing.Status = core.ConditionUnknown
 		}
 
-		if found.Status.Active > completions {
+		if found.Status.Active > (v.Status.Succeeded + v.Status.Failed) {
 			progressing.Status = core.ConditionTrue
 			if v.Status.StartTime == nil {
 				now := metav1.Now()
@@ -155,7 +160,7 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 			}
 		}
 
-		if found.Status.Active == 0 && (succeeded > 0 || failed > 0) {
+		if found.Status.Active == 0 && (v.Status.Succeeded > 0 || v.Status.Failed > 0) {
 			progressing.Status = core.ConditionFalse
 			completed = lt.LoadTestCondition{
 				Type:               lt.LoadTestCompleted,
@@ -167,7 +172,7 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 			now := metav1.Now()
 			v.Status.CompletionTime = &now
 
-			if failed > 0 {
+			if v.Status.Failed > 0 {
 				completed.Status = core.ConditionFalse
 				v.Status.CompletionTime = nil
 			}
@@ -181,6 +186,8 @@ func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest
 			return val
 		}).([]lt.LoadTestCondition)
 		v.Status.Duration = loadTestDuration(v.Status)
+		v.Status.Completions = loadTestCompletions(v.Status, found.Spec.Completions, found.Spec.Parallelism)
+		v.Status.Image = found.Spec.Template.Spec.Containers[0].Image
 
 		return r.Status().Update(ctx, v)
 	})
@@ -214,4 +221,28 @@ func loadTestDuration(status lt.LoadTestStatus) string {
 		d = duration.HumanDuration(status.CompletionTime.Sub(status.StartTime.Time))
 	}
 	return d
+}
+
+func loadTestCompletions(status lt.LoadTestStatus, jobCompletions, jobParallelism *int32) string {
+	if jobCompletions != nil {
+		return fmt.Sprintf("%d/%d", status.Succeeded, *jobCompletions)
+	}
+
+	parallelism := int32(0)
+	if jobParallelism != nil {
+		parallelism = *jobParallelism
+	}
+	if parallelism > 1 {
+		return fmt.Sprintf("%d/1 of %d", status.Succeeded, parallelism)
+	} else {
+		return fmt.Sprintf("%d/1", status.Succeeded)
+	}
+}
+
+func labels(v *lt.LoadTest, component string) map[string]string {
+	return map[string]string{
+		"artillery.io/test-name": v.Name,
+		"artillery.io/component": component,
+		"artillery.io/part-of":   "loadtest",
+	}
 }
