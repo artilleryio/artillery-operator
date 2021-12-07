@@ -3,21 +3,15 @@ package controllers
 //goland:noinspection SpellCheckingInspection
 import (
 	"context"
-	"fmt"
-	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
-	"github.com/thoas/go-funk"
 	v1 "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/duration"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
-
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -48,6 +42,8 @@ func (r *LoadTestReconciler) ensureJob(
 			logger.Error(err, "Failed to create new Job", "Job.Namespace", job.Namespace, "Job.Name", job.Name)
 			return &ctrl.Result{}, err
 		}
+
+		r.Recorder.Eventf(instance, "Normal", "Created", "Created Load Test worker master job: %s", job.Name)
 
 		// job created successfully
 		return nil, nil
@@ -83,16 +79,16 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 			Parallelism:  &parallelism,
 			Completions:  &completions,
 			BackoffLimit: &backoffLimit,
-			Template: core.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels(v, "loadtest-worker"),
 				},
-				Spec: core.PodSpec{
-					Containers: []core.Container{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
 						{
 							Name:  v.Name,
 							Image: workerImage,
-							VolumeMounts: []core.VolumeMount{
+							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      testScriptVol,
 									MountPath: "/data",
@@ -104,12 +100,12 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 							},
 						},
 					},
-					Volumes: []core.Volume{
+					Volumes: []corev1.Volume{
 						{
 							Name: testScriptVol,
-							VolumeSource: core.VolumeSource{
-								ConfigMap: &core.ConfigMapVolumeSource{
-									LocalObjectReference: core.LocalObjectReference{
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
 										Name: v.Spec.TestScript.Config.ConfigMap,
 									},
 								},
@@ -124,119 +120,6 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 
 	_ = ctrl.SetControllerReference(v, job, r.Scheme)
 	return job
-}
-
-func (r *LoadTestReconciler) updateJobStatus(ctx context.Context, v *lt.LoadTest) (*reconcile.Result, error) {
-	found := &v1.Job{}
-	err := r.Get(ctx, types.NamespacedName{
-		Name:      v.Name,
-		Namespace: v.Namespace,
-	}, found)
-	if err != nil {
-		// The job may not have been created yet, so requeue
-		return &ctrl.Result{RequeueAfter: 5 * time.Second}, err
-	}
-
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		var progressing lt.LoadTestCondition
-		var completed lt.LoadTestCondition
-
-		conditionsMap := conditionsMap(v.Status.Conditions)
-		progressing = conditionsMap[lt.LoadTestProgressing]
-
-		v.Status.Active = found.Status.Active
-		v.Status.Succeeded = found.Status.Succeeded
-		v.Status.Failed = found.Status.Failed
-
-		if found.Status.Active == 0 && (v.Status.Succeeded+v.Status.Failed) == 0 {
-			progressing.Status = core.ConditionUnknown
-		}
-
-		if found.Status.Active > (v.Status.Succeeded + v.Status.Failed) {
-			progressing.Status = core.ConditionTrue
-			if v.Status.StartTime == nil {
-				now := metav1.Now()
-				v.Status.StartTime = &now
-			}
-		}
-
-		if found.Status.Active == 0 && (v.Status.Succeeded > 0 || v.Status.Failed > 0) {
-			progressing.Status = core.ConditionFalse
-			completed = lt.LoadTestCondition{
-				Type:               lt.LoadTestCompleted,
-				Status:             core.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				LastProbeTime:      metav1.Now(),
-			}
-
-			now := metav1.Now()
-			v.Status.CompletionTime = &now
-
-			if v.Status.Failed > 0 {
-				completed.Status = core.ConditionFalse
-				v.Status.CompletionTime = nil
-			}
-			conditionsMap[lt.LoadTestCompleted] = completed
-		}
-
-		progressing.LastProbeTime = metav1.Now()
-		conditionsMap[lt.LoadTestProgressing] = progressing
-
-		v.Status.Conditions = funk.Map(conditionsMap, func(key lt.LoadTestConditionType, val lt.LoadTestCondition) lt.LoadTestCondition {
-			return val
-		}).([]lt.LoadTestCondition)
-		v.Status.Duration = loadTestDuration(v.Status)
-		v.Status.Completions = loadTestCompletions(v.Status, found.Spec.Completions, found.Spec.Parallelism)
-		v.Status.Image = found.Spec.Template.Spec.Containers[0].Image
-
-		return r.Status().Update(ctx, v)
-	})
-	if err != nil {
-		return &ctrl.Result{}, err
-	}
-
-	// status updated successfully
-	return nil, nil
-}
-
-func conditionsMap(conditions []lt.LoadTestCondition) map[lt.LoadTestConditionType]lt.LoadTestCondition {
-	out := funk.ToMap(conditions, "Type").(map[lt.LoadTestConditionType]lt.LoadTestCondition)
-	if _, ok := out[lt.LoadTestProgressing]; !ok {
-		out[lt.LoadTestProgressing] = lt.LoadTestCondition{
-			Type:               lt.LoadTestProgressing,
-			LastTransitionTime: metav1.Now(),
-		}
-	}
-	return out
-}
-
-func loadTestDuration(status lt.LoadTestStatus) string {
-	var d string
-	switch {
-	case status.StartTime == nil:
-
-	case status.CompletionTime == nil:
-		d = duration.HumanDuration(time.Since(status.StartTime.Time))
-	default:
-		d = duration.HumanDuration(status.CompletionTime.Sub(status.StartTime.Time))
-	}
-	return d
-}
-
-func loadTestCompletions(status lt.LoadTestStatus, jobCompletions, jobParallelism *int32) string {
-	if jobCompletions != nil {
-		return fmt.Sprintf("%d/%d", status.Succeeded, *jobCompletions)
-	}
-
-	parallelism := int32(0)
-	if jobParallelism != nil {
-		parallelism = *jobParallelism
-	}
-	if parallelism > 1 {
-		return fmt.Sprintf("%d/1 of %d", status.Succeeded, parallelism)
-	} else {
-		return fmt.Sprintf("%d/1", status.Succeeded)
-	}
 }
 
 func labels(v *lt.LoadTest, component string) map[string]string {
