@@ -5,5 +5,4 @@ bin/
 testbin/
 
 # Ignore hack data directory.
-hack/kind/
-hack/basic-loadtest/
+hack/
