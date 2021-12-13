@@ -1,0 +1,24 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: es-cluster-1
+  region: eu-west-1
+
+nodeGroups:
+  - name: ng-1
+    instanceType: m5.xlarge
+    desiredCapacity: 2
+    volumeSize: 100
+    ssh:
+      allow: true # will use ~/.ssh/id_rsa.pub as the default ssh key
+  - name: ng-2
+    instanceType: m5.xlarge
+    desiredCapacity: 2
+    volumeSize: 100
+    ssh:
+      allow: true # will use ~/.ssh/id_rsa.pub as the default ssh key
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: [ "api", "audit", "authenticator", "controllerManager" ]

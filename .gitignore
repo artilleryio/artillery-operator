@@ -21,6 +21,9 @@ testbin/*
 # Kind data volume mounts
 hack/kind/data
 hack/**/node_modules
+/hack/aws/eksctl/eks.schema.json
+/hack/aws/eksctl/kubeconfig
+/hack/aws/eksctl/kubeconfig.eksctl.lock
 
 # editor and IDE paraphernalia
 .idea
