@@ -65,6 +65,58 @@ kubectl get loadtests basic-test other-test
 # other-test   0/4           55s        55s   staging       artilleryio/artillery:latest
 ```
 
+#### Test reports
+
+We don't yet aggregate the test results for a Load Test. As such, you'll have to check the logs from each worker to
+monitor its test reports.
+
+You can use a LoadTests created published `Events` to do this. E.g. let's find `basic-test`'s workers.
+
+```shell
+kubectl describe loadtests basic-test
+
+# ...
+# ...
+# Status:
+# ...
+# Events:
+#  Type    Reason   Age   From                 Message
+#  ----    ------   ----  ----                 -------
+#  Normal  Created  25s   loadtest-controller  Created Load Test worker master job: basic-test
+#  Normal  Running  25s   loadtest-controller  Running Load Test worker pod: basic-test-6w2rq
+#  Normal  Running  25s   loadtest-controller  Running Load Test worker pod: basic-test-7fjxq
+```
+
+The `Events` section lists all the created workers. Using the first worker `basic-test-6w2rq`, we can follow its test
+reports.
+
+```shell
+kubectl logs -f basic-test-6w2rq
+```
+
+Displays:
+
+```shell
+
+  Telemetry is on. Learn more: https://artillery.io/docs/resources/core/telemetry.html
+Phase started: unnamed (index: 0, duration: 60s) 15:18:01(+0000)
+
+--------------------------------------
+Metrics for period to: 15:18:10(+0000) (width: 7.007s)
+--------------------------------------
+
+vusers.created_by_name.Access the / route: .................. 24
+vusers.created.total: ....................................... 24
+vusers.completed: ........................................... 24
+...
+...
+--------------------------------------
+Metrics for period to: 15:18:20(+0000) (width: 9.013s)
+--------------------------------------
+....
+....
+```
+
 #### basic-test
 
 The `basic-test` load test is created using the `hack/basic-loadtest/basic-test-cr.yaml` manifest.
