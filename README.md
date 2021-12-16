@@ -9,7 +9,7 @@
 - [kubectl installed](https://kubernetes.io/docs/tasks/tools/#kubectl).
 - [kubeconfig setup](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig) to access a
   cluster, either using the `KUBECONFIG` environment variable or `$HOME/.kube/config`.
-- A local copy of the `artillery-operator`, either downloaded or using `git clone`.
+- A local copy of the `artillery-operator`, either [downloaded](https://github.com/artilleryio/artillery-operator/archive/refs/heads/main.zip) or using `git clone`.
 
 ### Deploy the operator
 
