@@ -1,14 +1,185 @@
 # artillery-operator
 
-## Running locally
+[![Generic badge](https://img.shields.io/badge/Stage-Early%20Alpha-red.svg)](https://shields.io/)
+
+## Trial in your own cluster
 
 ### Pre-requisites
+
+- [kubectl installed](https://kubernetes.io/docs/tasks/tools/#kubectl).
+- [kubeconfig setup](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig) to access a
+  cluster, either using the `KUBECONFIG` environment variable or `$HOME/.kube/config`.
+- A local copy of the `artillery-operator`, either downloaded or using `git clone`.
+
+### Deploy the operator
+
+Ensure you can execute `operator-deploy.sh` found in the `artillery-operator` root directory.
+
+Then simply run:
+
+```shell
+./operator-deploy.sh
+```
+
+This will install the operator image `ghcr.io/artilleryio/artillery-operator-alpha:latest` in your cluster. And, run it
+from the `artillery-operator-system` namespace with restricted cluster permissions.
+
+### Undeploy the operator
+
+Ensure you can execute `operator-undeploy.sh` found in the `artillery-operator` root directory.
+
+Then simply run:
+
+```shell
+./operator-undeploy.sh
+```
+
+This will remove the operator and any created namespaces, load tests, etc... from your cluster.
+
+## Running Load Tests
+
+### Pre-requisites
+
+A cluster (remote or local) with artillery-operator [already deployed](#trial-in-your-own-cluster).
+
+### Example
+
+The example is available at `hack/basic-loadtest`.
+
+It provides two load tests each configured with a different number of workers and a target Api to test.
+
+The example includes a [`kustomize`](https://kustomize.io) manifest which generates the ConfigMap required to hold the
+test script used by the load tests. The `kustomize` manifest will also apply the Load Test Custom Resource manifests to
+your cluster.
+
+```shell
+kubectl apply -k hack/basic-loadtest
+
+# configmap/test-script created
+# loadtest.loadtest.artillery.io/basic-test created
+# loadtest.loadtest.artillery.io/other-test created
+
+kubectl get loadtests basic-test other-test
+# NAME         COMPLETIONS   DURATION   AGE   ENVIRONMENT   IMAGE
+# basic-test   0/2           55s        55s   dev           artilleryio/artillery:latest
+# other-test   0/4           55s        55s   staging       artilleryio/artillery:latest
+```
+
+#### Test reports
+
+We don't yet aggregate the test results for a Load Test. As such, you'll have to check the logs from each worker to
+monitor its test reports.
+
+You can use a LoadTests created published `Events` to do this. E.g. let's find `basic-test`'s workers.
+
+```shell
+kubectl describe loadtests basic-test
+
+# ...
+# ...
+# Status:
+# ...
+# Events:
+#  Type    Reason   Age   From                 Message
+#  ----    ------   ----  ----                 -------
+#  Normal  Created  25s   loadtest-controller  Created Load Test worker master job: basic-test
+#  Normal  Running  25s   loadtest-controller  Running Load Test worker pod: basic-test-6w2rq
+#  Normal  Running  25s   loadtest-controller  Running Load Test worker pod: basic-test-7fjxq
+```
+
+The `Events` section lists all the created workers. Using the first worker `basic-test-6w2rq`, we can follow its test
+reports.
+
+```shell
+kubectl logs -f basic-test-6w2rq
+```
+
+Displays:
+
+```shell
+
+  Telemetry is on. Learn more: https://artillery.io/docs/resources/core/telemetry.html
+Phase started: unnamed (index: 0, duration: 60s) 15:18:01(+0000)
+
+--------------------------------------
+Metrics for period to: 15:18:10(+0000) (width: 7.007s)
+--------------------------------------
+
+vusers.created_by_name.Access the / route: .................. 24
+vusers.created.total: ....................................... 24
+vusers.completed: ........................................... 24
+...
+...
+--------------------------------------
+Metrics for period to: 15:18:20(+0000) (width: 9.013s)
+--------------------------------------
+....
+....
+```
+
+#### basic-test
+
+The `basic-test` load test is created using the `hack/basic-loadtest/basic-test-cr.yaml` manifest.
+
+```yaml
+apiVersion: loadtest.artillery.io/v1alpha1
+kind: LoadTest
+metadata:
+  name: basic-test
+  namespace: default
+  labels:
+    "artillery.io/test-name": basic-test
+    "artillery.io/component": loadtest
+    "artillery.io/part-of": loadtest
+
+spec:
+  # Add fields here
+  count: 2
+  environment: dev
+  testScript:
+    config:
+      configMap: test-script
+```
+
+It runs 2 workers against a test script loaded from `configmap/test-script`.
+
+#### other-test
+
+The `other-test` load test is created using the `hack/basic-loadtest/other-test-cr.yaml` manifest.
+
+```yaml
+apiVersion: loadtest.artillery.io/v1alpha1
+kind: LoadTest
+metadata:
+  name: other-test
+  namespace: default
+  labels:
+    "artillery.io/test-name": other-test
+    "artillery.io/component": loadtest
+    "artillery.io/part-of": loadtest
+
+spec:
+  # Add fields here
+  count: 4
+  environment: staging
+  testScript:
+    config:
+      configMap: test-script
+```
+
+It runs 4 workers against a test script loaded from `configmap/test-script`.
+
+## Developing
+
+### With local deployment
+
+#### Pre-requisites
 
 - [Go installed](https://golang.org/doc/install).
 - [Docker Desktop](https://docs.docker.com/desktop/#download-and-install) up and running.
 - [KinD installed](https://kind.sigs.k8s.io/docs/user/quick-start#installation), `brew install kind` on macOS.
 
-### Overview
+#### Overview
 
 The instructions here will help you set up, develop and deploy the operator locally. You will need the following:
 
@@ -16,7 +187,7 @@ The instructions here will help you set up, develop and deploy the operator loca
 - A [local docker registry](https://docs.docker.com/registry/) to store the operator image for deployment.
 - To get comfortable with the `make` commands required to update and deploy the operator.
 
-### Create a KinD cluster and local docker registry
+#### Create a KinD cluster and local docker registry
 
 We are going to create a cluster with one master, two worker nodes and one docker registry so that we can build, push
 and deploy our operator into Kubernetes.
@@ -33,7 +204,7 @@ kind get nodes
 kubectl get all --all-namespaces
 ```
 
-### Add local registry domain to /etc/hosts
+#### Add local registry domain to /etc/hosts
 
 Append below to your `/etc/hosts` file
 
@@ -43,9 +214,9 @@ Append below to your `/etc/hosts` file
 # End of section
 ```
 
-### Local development and deployment
+#### Local development and deployment
 
-#### Modifying the *_types.go
+##### Modifying the *_types.go
 
 After modifying the *_types.go file always run the following command to update the generated code for that resource
 type:
@@ -54,7 +225,7 @@ type:
 make generate
 ```
 
-#### Updating CRD and other manifests
+##### Updating CRD and other manifests
 
 CRD, RBAC and other manifests can be generated and updated with the following command:
 
@@ -64,7 +235,7 @@ make manifests
 
 These manifests are located in the `config` directory.
 
-#### Local development
+##### Local development
 
 You can run the operator as a Go program outside of the cluster. This method is useful for development purposes to speed
 up deployment and testing.
@@ -76,7 +247,7 @@ a Go program locally:
 make install run
 ```
 
-#### Local deployment
+##### Local deployment
 
 A new namespace is created with name <project-name>-system, ex. artillery-operator-system, and will be used for the
 deployment.
@@ -95,16 +266,16 @@ the RBAC manifests from config/rbac.
 make deploy IMG=kind-registry:5000/artillery-operator:v0.0.1
 ```
 
-## Running Remotely
+### With remote deployment
 
-### Pre-requisites
+#### Pre-requisites
 
 - [Go installed](https://golang.org/doc/install).
 - [Docker Desktop](https://docs.docker.com/desktop/#download-and-install) up and running.
 - [eksctl installed](https://eksctl.io/introduction/#installation) to set up a remote cluster
   on [AWS EKS](https://aws.amazon.com/eks/), `brew tap weaveworks/tap; brew install weaveworks/tap/eksctl` on macOS.
 
-### Overview
+#### Overview
 
 Use these instructions to deploy the operator remotely on an AWS EKS cluster. You will need the following:
 
@@ -113,11 +284,11 @@ Use these instructions to deploy the operator remotely on an AWS EKS cluster. Yo
 - A remote container registry (e.g. Docker Hub, etc..) to store the operator image for deployment.
 - To get comfortable with the `make` commands required to update and deploy the operator.
 
-### Create + configure access to a remote cluster
+#### Create + configure access to a remote cluster
 
 **Skip this if you already have a remote cluster ready.**
 
-#### Create an EKS cluster
+##### Create an EKS cluster
 
 We'll be setting up a remote on AWS EKS using `eksctl`.
 
@@ -127,7 +298,7 @@ eksctl create cluster -f hack/aws/eksctl/cluster.yaml
 
 This will create a cluster as specified in `hack/aws/eksctl/cluster.yaml` and should take around ~20 minutes.
 
-#### Configure access to EKS cluster
+##### Configure access to EKS cluster
 
 We need to configure `kubeconfig` access to be able to deploy our operator into the cluster.
 
@@ -149,14 +320,14 @@ kubectl get nodes  # this should display 4 nodes running on aws e.g. ip-*.eu-wes
 
 Do NOT commit the `kubeconfig` file into source control as it's based on your own credentials.
 
-### Deploying to the remote cluster
+#### Deploying to the remote cluster
 
 The operator is deployed as a K8s `Deployment` resource that runs in a newly created namespace with cluster wide RBAC
 permissions.
 
 The Operator SDK simplifies this step by providing a set of tasks in the project's `Makefile`.
 
-#### Step 1: Create and host container image remotely
+##### Step 1: Create and host container image remotely
 
 **Note**: Ensure you have a remote registry (e.g. hub.docker.com, etc..) to host and share the operator's container
 image with the cluster.
@@ -177,7 +348,7 @@ export IMAGE_REPO_OWNER=ghcr.io/artilleryio
 make docker-build docker-push
 ```
 
-#### Step 2: Deploy to the remote cluster
+##### Step 2: Deploy to the remote cluster
 
 Point to your `kubeconfig` file:
 
@@ -216,76 +387,3 @@ kubectl -n artillery-operator-system get pods # find the artillery-operator-cont
 kubectl -n artillery-operator-system logs artillery-operator-controller-manager-764f97bdc9-dgcm8 -c manager # view the logs to ensure all is well
 ```
 
-## Run Load Test example
-
-Whether running locally or remotely, you can run the load tests example below provided you have a K8s artillery operator
-enabled cluster.
-
-The example is available at `hack/basic-loadtest`. It provides two load tests each configured with a different number of
-workers. The example uses Kustomize (which is part of kubectl) to generate a ConfigMap that holds a test's test script
-as well as deploy Load Test Custom Resource manifests.
-
-```shell
-kubectl apply -k hack/basic-loadtest
-
-# configmap/test-script created
-# loadtest.loadtest.artillery.io/basic-test created
-# loadtest.loadtest.artillery.io/other-test created
-
-kubectl get loadtests basic-test other-test
-# NAME         COMPLETIONS   DURATION   AGE   ENVIRONMENT   IMAGE
-# basic-test   0/2           55s        55s   dev           artilleryio/artillery:latest
-# other-test   0/4           55s        55s   staging       artilleryio/artillery:latest
-```
-
-### basic-test
-
-The `basic-test` load test is created using the `hack/basic-loadtest/basic-test-cr.yaml` manifest.
-
-```yaml
-apiVersion: loadtest.artillery.io/v1alpha1
-kind: LoadTest
-metadata:
-  name: basic-test
-  namespace: default
-  labels:
-    "artillery.io/test-name": basic-test
-    "artillery.io/component": loadtest
-    "artillery.io/part-of": loadtest
-
-spec:
-  # Add fields here
-  count: 2
-  environment: dev
-  testScript:
-    config:
-      configMap: test-script
-```
-
-It runs 2 workers against a test script loaded from `configmap/test-script`.
-
-### other-test
-
-The `other-test` load test is created using the `hack/basic-loadtest/other-test-cr.yaml` manifest.
-
-```yaml
-apiVersion: loadtest.artillery.io/v1alpha1
-kind: LoadTest
-metadata:
-  name: other-test
-  namespace: default
-  labels:
-    "artillery.io/test-name": other-test
-    "artillery.io/component": loadtest
-    "artillery.io/part-of": loadtest
-
-spec:
-  # Add fields here
-  count: 4
-  environment: staging
-  testScript:
-    config:
-      configMap: test-script
-```
-
-It runs 4 workers against a test script loaded from `configmap/test-script`.
