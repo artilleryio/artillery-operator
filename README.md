@@ -1,5 +1,7 @@
 [![Generic badge](https://img.shields.io/badge/Stage-Early%20Alpha-red.svg)](https://shields.io/)
 
+<img width="1012" alt="Kubernetes native load testing" src="assets/artillery-operator-header.png">
+
 # Artillery Operator for Kubernetes
 
 The Artillery Operator is an implementation of
