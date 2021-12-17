@@ -1,15 +1,24 @@
-# artillery-operator
-
 [![Generic badge](https://img.shields.io/badge/Stage-Early%20Alpha-red.svg)](https://shields.io/)
 
+# Artillery Operator for Kubernetes
+
+The Artillery Operator is an implementation of
+a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) that
+enables Kubernetes native load testing.
+
 ## Trial in your own cluster
+
+This deploys the alpha operator image:
+[artillery-operator-alpha](https://github.com/orgs/artilleryio/packages/container/package/artillery-operator-alpha).
 
 ### Pre-requisites
 
 - [kubectl installed](https://kubernetes.io/docs/tasks/tools/#kubectl).
 - [kubeconfig setup](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig) to access a
   cluster, either using the `KUBECONFIG` environment variable or `$HOME/.kube/config`.
-- A local copy of the `artillery-operator`, either [downloaded](https://github.com/artilleryio/artillery-operator/archive/refs/heads/main.zip) or using `git clone`.
+- A local copy of the `artillery-operator`,
+  either [downloaded](https://github.com/artilleryio/artillery-operator/archive/refs/heads/main.zip) or
+  using `git clone`.
 
 ### Deploy the operator
 
@@ -386,4 +395,26 @@ kubectl -n artillery-operator-system get pods # find the artillery-operator-cont
 
 kubectl -n artillery-operator-system logs artillery-operator-controller-manager-764f97bdc9-dgcm8 -c manager # view the logs to ensure all is well
 ```
+
+## Known issues
+
+### Duplicated test reports (rare)
+
+Duplicate test reports happen when a restarted failed worker reports test run results the worker has previously reported
+before it failed.
+
+We mitigate for this inside the operator by creating Kubernetes Job resources configured with
+`RestartPolicy=Never` when starting Pods and `BackoffLimit=0` for the actual Job. This attempts to run the Job once
+without restarting failed Pods (workers) for almost all circumstances.
+
+This should stop failed workers from restarting therefore stopping duplicate test reports.
+
+**HOWEVER**, the communication between the job controller, apiserver, kubelet and containers is not atomic. So, it is
+possible that under some very unlikely combination of crashes/restarts in the kubelet, containers and/or job controller,
+that the program in the Job's pod template might be started twice.
+
+Here's a basic example of how things can go wrong:
+
+- A user manually deletes a Pod using `kubectl`.
+- The Load Test's Job resource create another one Pod to restart the work, therefore duplicating test results. 
 
