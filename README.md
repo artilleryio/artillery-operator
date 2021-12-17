@@ -1,10 +1,12 @@
 [![Generic badge](https://img.shields.io/badge/Stage-Early%20Alpha-red.svg)](https://shields.io/)
 
-# Artillery Operator for Kubernetes
+<img width="1012" alt="Kubernetes native load testing" src="assets/artillery-operator-header.png">
+
+# Artillery Operator
 
 The Artillery Operator is an implementation of
 a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) that
-enables Kubernetes native load testing.
+enables Kubernetes native load testing in your cluster.
 
 ## Trial in your own cluster
 
