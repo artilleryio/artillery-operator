@@ -24,6 +24,7 @@ hack/**/node_modules
 /hack/aws/eksctl/eks.schema.json
 /hack/aws/eksctl/kubeconfig
 /hack/aws/eksctl/kubeconfig.eksctl.lock
+/hack/prom-pushgateway/kube-prometheus-main
 
 # editor and IDE paraphernalia
 .idea

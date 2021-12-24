@@ -160,12 +160,8 @@ func configureStartupAndCompletion(v *lt.LoadTest, o ObservedStatus) {
 func publishEventsIfAny(ctx context.Context, v *lt.LoadTest, ctl client.Client, r record.EventRecorder, o ObservedStatus) error {
 	switch {
 	case o == LoadTestActive && v.Status.StartTime == nil:
-		podList := &corev1.PodList{}
-		listOpts := []client.ListOption{
-			client.InNamespace(v.Namespace),
-			client.MatchingLabels(labels(v, "loadtest-worker")),
-		}
-		if err := ctl.List(ctx, podList, listOpts...); err != nil {
+		podList, err := getPods(ctx, v, ctl)
+		if err != nil {
 			return err
 		}
 		for _, pod := range podList.Items {
@@ -177,6 +173,18 @@ func publishEventsIfAny(ctx context.Context, v *lt.LoadTest, ctl client.Client, 
 	}
 
 	return nil
+}
+
+func getPods(ctx context.Context, v *lt.LoadTest, ctl client.Client) (*corev1.PodList, error) {
+	podList := &corev1.PodList{}
+	listOpts := []client.ListOption{
+		client.InNamespace(v.Namespace),
+		client.MatchingLabels(labels(v, "loadtest-worker")),
+	}
+	if err := ctl.List(ctx, podList, listOpts...); err != nil {
+		return nil, err
+	}
+	return podList, nil
 }
 
 func configureStatusAttrs(v *lt.LoadTest, job *v1.Job) {
