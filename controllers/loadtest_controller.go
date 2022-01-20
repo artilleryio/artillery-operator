@@ -13,23 +13,15 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
-	"github.com/go-logr/logr"
-
 	v1 "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -96,12 +88,6 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	result, err = r.publishMetrics(ctx, loadTest, logger)
-	if result != nil {
-		logger.Error(err, "Failed to publish metrics")
-		return *result, err
-	}
-
 	// == Finish == == == == ==
 	// Everything went fine, don't requeue
 	return ctrl.Result{}, nil
@@ -114,66 +100,4 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&v1.Job{}).
 		Owns(&core.Pod{}).
 		Complete(r)
-}
-
-func (r *LoadTestReconciler) publishMetrics(ctx context.Context, v *lt.LoadTest, logger logr.Logger) (*ctrl.Result, error) {
-	found := &v1.Job{}
-	err := r.Get(ctx, types.NamespacedName{
-		Name:      v.Name,
-		Namespace: v.Namespace,
-	}, found)
-	if err != nil {
-		// The job may not have been created yet, so requeue
-		return &ctrl.Result{RequeueAfter: 5 * time.Second}, err
-	}
-
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if observedStatus(found.Status) != LoadTestCompleted {
-			return nil
-		}
-
-		restConfig, err := ctrl.GetConfig()
-		if err != nil {
-			return err
-		}
-
-		clientset, err := kubernetes.NewForConfig(restConfig)
-		if err != nil {
-			return err
-		}
-
-		podList, err := getPods(ctx, v, r.Client)
-		if err != nil {
-			return err
-		}
-
-		tailLines := int64(23) // no of lines for summary
-		logger.Info("Pod list items", "podList.Items.Len", len(podList.Items))
-		for _, pod := range podList.Items {
-			req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &core.PodLogOptions{TailLines: &tailLines})
-			podLogs, err := req.Stream(ctx)
-			if err != nil {
-				return fmt.Errorf("Error in opening stream, err:\n%s", err.Error())
-			}
-
-			buf := new(bytes.Buffer)
-			if _, err := io.Copy(buf, podLogs); err != nil {
-				return fmt.Errorf("Error in copy information from podLogs to buf, err:\n%s", err.Error())
-			}
-
-			logger.Info(fmt.Sprintf("Logs for Pod: [%s]\n%s\n-----------------\n", pod.Name, buf.String()))
-
-			if err := podLogs.Close(); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return &ctrl.Result{}, err
-	}
-
-	// status updated successfully
-	return nil, nil
 }

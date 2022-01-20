@@ -21,14 +21,19 @@ script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 kube_prom_dir="${script_dir}/kube-prometheus-main"
 mkdir -p "${kube_prom_dir}"
 
-# download and unpack the operator
-curl -L \
- -v \
- 'https://github.com/prometheus-operator/kube-prometheus/archive/refs/heads/main.zip' \
- -o "${script_dir}/kube-prometheus-main.zip"
+# expected location of operator zip
+kube_prom_zip="${script_dir}/kube-prometheus-main.zip"
 
-tar -zxvf "${script_dir}/kube-prometheus-main.zip" -C "${script_dir}"
-rm -f "${script_dir}/kube-prometheus-main.zip"
+# download the operator zip if not available
+if [ ! -f "${kube_prom_zip}" ]; then
+  curl -L \
+   -v \
+   'https://github.com/prometheus-operator/kube-prometheus/archive/refs/heads/main.zip' \
+   -o "${kube_prom_zip}"
+fi
+
+# unpack the operator
+tar -zxvf "${kube_prom_zip}" -C "${script_dir}"
 
 # source: https://prometheus-operator.dev/docs/prologue/quick-start/
 # create the monitoring stack
@@ -38,7 +43,6 @@ kubectl apply -f "${kube_prom_dir}/manifests/"
 
 # add the prometheus pushgateway repo to helm
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
 
 # source: https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway
 # install the pushgateway
