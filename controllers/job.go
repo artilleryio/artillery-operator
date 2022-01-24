@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	workerImage   = "artilleryio/artillery:latest"
+	workerImage   = "ghcr.io/artilleryio/artillery-metrics-enabled:experimental"
 	testScriptVol = "test-script"
 )
 
@@ -95,6 +95,7 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels(v, "loadtest-worker"),
 				},
+
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
@@ -109,6 +110,16 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 							Args: []string{
 								"run",
 								"/data/test-script.yaml",
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "WORKER_ID",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.name",
+										},
+									},
+								},
 							},
 						},
 					},
