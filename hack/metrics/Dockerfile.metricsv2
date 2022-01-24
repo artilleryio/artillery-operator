@@ -1,0 +1,14 @@
+FROM artilleryio/artillery:latest
+LABEL maintainer="team@artillery.io"
+
+RUN apk -U upgrade \
+  && apk add --no-cache git
+
+WORKDIR /home/node/artillery
+
+RUN npm \
+    install \
+    "https://github.com/artilleryio/artillery-plugin-publish-metrics.git#ezo/art-221-implement-pushgateway-integration-based" \
+    --save
+
+ENTRYPOINT ["/home/node/artillery/bin/artillery"]

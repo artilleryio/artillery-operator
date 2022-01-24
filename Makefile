@@ -53,6 +53,12 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Artillery with enabled prometheus metrics publishing image details
+ARTILLERY_METRICS_IMAGE_PLATFORM ?= linux/amd64  ## Use linux/arm64 for Apple silicon builds
+ARTILLERY_METRICS_IMAGE_VERSION ?= experimental
+ARTILLERY_METRICS_IMAGE_TAG ?= artillery-metrics-enabled:${ARTILLERY_METRICS_IMAGE_VERSION}
+ARTILLERY_METRICS_IMAGE_REMOTE ?= $(IMAGE_REPO_OWNER)/$(ARTILLERY_METRICS_IMAGE_TAG)
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -76,6 +82,17 @@ all: build
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Artillery with enabled prometheus metrics publishing
+
+.PHONY: docker-build-metrics
+docker-build-metrics: ## Build artillery with enabled prometheus metrics publishing docker image.
+	docker build --no-cache --platform ${ARTILLERY_METRICS_IMAGE_PLATFORM} -f ./hack/metrics/Dockerfile.metricsv2 -t ${ARTILLERY_METRICS_IMAGE_TAG} .
+	docker tag ${ARTILLERY_METRICS_IMAGE_TAG} ${ARTILLERY_METRICS_IMAGE_REMOTE}
+
+.PHONY: docker-push-metrics
+docker-push-metrics: ## Push artillery with enabled prometheus metrics publishing docker image.
+	docker push ${ARTILLERY_METRICS_IMAGE_REMOTE}
 
 ##@ Development
 
