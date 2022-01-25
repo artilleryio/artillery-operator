@@ -26,6 +26,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 IMAGE_REPO_OWNER ?= artilleryio
 
+IMAGE_PLATFORM ?= linux/amd64
 IMAGE_NAME ?= artillery-operator-alpha
 COMMIT_TAG := $(shell git log -1 --pretty=%H)
 IMAGE_COMMIT_TAG ?=${IMAGE_NAME}:${COMMIT_TAG}
@@ -120,7 +121,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMAGE_COMMIT_TAG} .
+	docker build --platform ${IMAGE_PLATFORM} -t ${IMAGE_COMMIT_TAG} .
 	docker tag ${IMAGE_COMMIT_TAG} ${IMG}
 
 docker-push: ## Push docker image with the manager.
