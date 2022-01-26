@@ -1,0 +1,38 @@
+# In Artillery, each VU will be assigned to one of the defined
+# scenarios. By default, each scenario has a weight of 1, meaning
+# each scenario has the same probability of getting assigned to a
+# VU.
+#
+# By specifying a weight in a scenario, you'll increase the chances
+# of Artillery assigning the scenario for a VU. The probability of
+# a scenario getting chosen depends on the total weight for all
+# scenarios.
+#
+# To learn more, read the Artillery documentation on scenario weights:
+# https://artillery.io/docs/guides/guides/test-script-reference.html#Scenario-weights
+
+config:
+  target: "http://prod-publi-bf4z9b3ymbgs-1669151092.eu-west-1.elb.amazonaws.com:8080"
+  plugins:
+    publish-metrics:
+      - type: prometheus
+        pushgateway: "http://host.docker.internal:9091"
+        prefix: 'artillery_k8s'
+        tags:
+          - "load_test_id:test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3"
+          - "type:loadtest"
+
+  phases:
+    - duration: 60
+      arrivalRate: 3
+
+scenarios:
+  - name: "Access the / route"
+    flow:
+      - get:
+          url: "/"
+
+  - name: "Access the /dino route"
+    flow:
+      - get:
+          url: "/dino"
