@@ -55,7 +55,7 @@ A cluster (remote or local) with artillery-operator [already deployed](#trial-in
 
 ### Example: LoadTest with local test reports
 
-The example is available at `hack/basic-loadtest`.
+The example is available at `hack/examples/basic-loadtest`.
 
 It provides a load test configured with two workers and a target Api to test.
 
@@ -64,16 +64,14 @@ test script used by the load tests. The `kustomize` manifest will also apply the
 your cluster.
 
 ```shell
-kubectl apply -k hack/basic-loadtest
+kubectl apply -k hack/examples/basic-loadtest
 
 # configmap/test-script created
 # loadtest.loadtest.artillery.io/basic-test created
-# loadtest.loadtest.artillery.io/other-test created
 
 kubectl get loadtests basic-test other-test
 # NAME         COMPLETIONS   DURATION   AGE   ENVIRONMENT   IMAGE
 # basic-test   0/2           55s        55s   dev           artilleryio/artillery:latest
-# other-test   0/4           55s        55s   staging       artilleryio/artillery:latest
 ```
 
 #### Test reports
@@ -130,7 +128,7 @@ Metrics for period to: 15:18:20(+0000) (width: 9.013s)
 
 #### LoadTest manifest
 
-The `basic-test` load test is created using the `hack/basic-loadtest/basic-test-cr.yaml` manifest.
+The `basic-test` load test is created using the `hack/examples/basic-loadtest/basic-test-cr.yaml` manifest.
 
 ```yaml
 apiVersion: loadtest.artillery.io/v1alpha1
@@ -153,6 +151,123 @@ spec:
 ```
 
 It runs 2 workers against a test script loaded from `configmap/test-script`.
+
+### Example: LoadTest with test reports published to Prometheus
+
+The example is available at `hack/examples/published-metrics-loadtest`.
+
+#### Working with Prometheus and Prometheus Pushgateway
+
+This load test will be publishing worker test report details as metrics to [Prometheus](https://prometheus.io) using
+the [Prometheus Pushgateway](https://prometheus.io/docs/instrumenting/pushing/).
+
+Follow the instruction below if you don't have access to a Prometheus or Pushgateway instance. Otherwise, please skip
+ahead.
+
+- Ensure you have [Helm](https://helm.sh/docs/intro/install/) installed locally.
+- If you haven't yet, download or clone
+  the `artillery-operator` [github repo](https://github.com/artilleryio/artillery-operator).
+- Navigate to the root directory.
+- Execute the following:
+
+```shell
+# Ensure you have a running cluster
+kubectl get all --all-namespaces
+
+# Run setup script
+chmod +x hack/prom-pushgateway/up.sh
+.hack/prom-pushgateway/up.sh
+# ...
+# ...
+# 1. Get the application URL by running these commands:
+#   export POD_NAME=$(kubectl get pods --namespace default -l "app=prometheus-pushgateway,release=prometheus-pushgateway" -o jsonpath="{.items[0].metadata.name}")
+#   echo "Visit http://127.0.0.1:8080 to use your application"
+#   kubectl port-forward $POD_NAME 8080:80
+# Forwarding from 127.0.0.1:9091 -> 9091
+# Forwarding from [::1]:9091 -> 9091
+```
+
+You now have Prometheus and the Pushgateway running on K8s. Also, the Pushgateway is now accessible locally
+on `http://localhost:9091` or `http://host.docker.internal:9091`.
+
+#### Publishing test reports metrics
+
+Publishing worker test report details as metrics requires configuring the `publish-metrics` plugin in
+the `test-script.yaml` file with a `prometheus` type.
+
+See `hack/examples/published-metrics-loadtest/test-script.yaml`.
+
+```yaml
+config:
+  target: "http://prod-publi-bf4z9b3ymbgs-1669151092.eu-west-1.elb.amazonaws.com:8080"
+  plugins:
+    publish-metrics:
+      - type: prometheus
+        pushgateway: "http://host.docker.internal:9091"
+        prefix: 'artillery_k8s'
+        tags:
+          - "load_test_id:test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3"
+          - "type:loadtest"
+...
+...
+```
+
+If needed, please update the `pushgateway` field with details to where your Pushgateway is running.
+
+The rest of the configuration, i.e. `prefix` and `tags`, is optional. But it makes easy to locate your test report
+metrics in Prometheus.
+
+You can consult [Publishing Metrics / Monitoring](https://www.artillery.io/docs/guides/plugins/plugin-publish-metrics)
+for more info regarding the `artillery-publish-metrics` plugin.
+
+#### Running the load test
+
+Similar to the [previous load test example](#example-loadtest-with-local-test-reports), you run the test
+using [`kustomize`](https://kustomize.io).
+
+```shell
+# Ensure the Artillery Operator is running on your cluster
+kubectl -n artillery-operator-system get deployment.apps/artillery-operator-controller-manager
+# NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+# artillery-operator-controller-manager   1/1     1            1           27s
+
+# Run the load test
+kubectl apply -k hack/examples/published-metrics-loadtest
+# configmap/test-script created
+# loadtest.loadtest.artillery.io/test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3 created
+
+# Ensure the test is running
+kubectl get loadtests test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3
+# NAME                                        COMPLETIONS   DURATION   AGE   ENVIRONMENT
+# test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3   0/4           60s        62s   staging
+
+# Find the load test's workers
+kubectl describe loadtests test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3
+# ...
+# ...
+# Status:
+# ...
+# Events:
+#  Type    Reason     Age                    From                 Message
+#  ----    ------     ----                   ----                 -------
+#  Normal  Created    2m30s                  loadtest-controller  Created Load Test worker master job: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3
+#  Normal  Running    2m29s (x2 over 2m29s)  loadtest-controller  Running Load Test worker pod: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3-2qmzv
+#  Normal  Running    2m29s (x2 over 2m29s)  loadtest-controller  Running Load Test worker pod: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3-cn99l
+#  Normal  Running    2m29s (x2 over 2m29s)  loadtest-controller  Running Load Test worker pod: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3-bsvgp
+#  Normal  Running    2m29s (x2 over 2m29s)  loadtest-controller  Running Load Test worker pod: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3-gk92x
+```
+
+There are now 4 workers running as Pods with different name. These Pod names correspond to Pushgateway job IDs making it
+easier to track your test report metrics between the cluster and the Pushgateway (and ultimately Prometheus).
+
+Navigating to the Pushgateway, in our case at `http://localhost:9091`, you'll see:
+![](assets/pushgateway-with-workers.png)
+
+Clicking on a job you'll find the key test report metrics:
+
+- `artillery_k8s_counter`, includes counter based metrics like `engine_http_responses`, etc...
+- `artillery_k8s_rates`, includes rates based metrics like `engine_http_request_rate`, etc...
+- `artillery_k8s_summaries`, includes summary based metrics like `engine_http_response_time_min`, etc...
 
 ## Developing
 
