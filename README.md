@@ -214,10 +214,9 @@ config:
 
 If needed, please update the `pushgateway` field with details to where your Pushgateway is running.
 
-The rest of the configuration, i.e. `prefix` and `tags`, is optional. But it makes easy to locate your test report
-metrics in Prometheus.
+`prefix` and `tags` configuration is optional. Use them to easily locate your test report metrics in Prometheus.
 
-You can consult [Publishing Metrics / Monitoring](https://www.artillery.io/docs/guides/plugins/plugin-publish-metrics)
+Consult [Publishing Metrics / Monitoring](https://www.artillery.io/docs/guides/plugins/plugin-publish-metrics)
 for more info regarding the `artillery-publish-metrics` plugin.
 
 #### Running the load test
@@ -257,13 +256,13 @@ kubectl describe loadtests test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3
 #  Normal  Running    2m29s (x2 over 2m29s)  loadtest-controller  Running Load Test worker pod: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3-gk92x
 ```
 
-There are now 4 workers running as Pods with different names. These Pod names correspond to Pushgateway job IDs making
-it easier to track your test report metrics between the cluster and the Pushgateway (and ultimately Prometheus).
+There are now 4 workers running as Pods with different names. These Pod names correspond to Pushgateway job IDs.
 
 #### Viewing test report metrics on the Pushgateway
 
 Navigating to the Pushgateway, in our case at `http://localhost:9091`, you'll see:
-![](assets/pushgateway-with-workers.png)
+<br/>
+![Pushgateway dashboard](assets/pushgateway-with-workers.png)
 
 Clicking on a job matching a Pod name displays the test report metrics for a specific worker:
 
@@ -284,15 +283,19 @@ kubectl -n monitoring port-forward service/prometheus-k8s 9090
 Navigating to the dashboard on `http://localhost:9090/` we can view aggregated test report metrics for our Load Test
 across all workers.
 
-Enter: `artillery_k8s_counters{load_test_id="test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3", metric="engine_http_requests"}`
+Now enter into the search input field:
 
-Displays `engine_http_requests` metric for Load Test `test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3`.
+```text
+artillery_k8s_counters{load_test_id="test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3", metric="engine_http_requests"}
+```
 
-![](assets/prometheus-dashboard.png)
+This displays `engine_http_requests` metric for Load Test `test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3`.
 
-You can also visualise the metrics by clicking the Graph tab.
+![Prometheus dashboard](assets/prometheus-dashboard.png)
 
-![](assets/prometheus-dashboard-graph.png)
+Now let's visualise the metrics by clicking the Graph tab.
+
+![Prometheus dashboard with graph](assets/prometheus-dashboard-graph.png)
 
 ## Developing
 
