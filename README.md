@@ -18,7 +18,7 @@ This deploys the alpha operator image:
 - [kubectl installed](https://kubernetes.io/docs/tasks/tools/#kubectl).
 - [kubeconfig setup](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig) to access a
   cluster, either using the `KUBECONFIG` environment variable or `$HOME/.kube/config`.
-- A local copy of the `artillery-operator`,
+- A local copy of the `artillery-operator` github repo,
   either [downloaded](https://github.com/artilleryio/artillery-operator/archive/refs/heads/main.zip) or
   using `git clone`.
 
@@ -53,14 +53,14 @@ This will remove the operator and any created namespaces, load tests, etc... fro
 
 A cluster (remote or local) with artillery-operator [already deployed](#trial-in-your-own-cluster).
 
-### Example
+### Example: LoadTest with local test reports
 
 The example is available at `hack/basic-loadtest`.
 
-It provides two load tests each configured with a different number of workers and a target Api to test.
+It provides a load test configured with two workers and a target Api to test.
 
 The example includes a [`kustomize`](https://kustomize.io) manifest which generates the ConfigMap required to hold the
-test script used by the load tests. The `kustomize` manifest will also apply the Load Test Custom Resource manifests to
+test script used by the load tests. The `kustomize` manifest will also apply the Load Test Custom Resource manifest to
 your cluster.
 
 ```shell
@@ -78,8 +78,8 @@ kubectl get loadtests basic-test other-test
 
 #### Test reports
 
-We don't yet aggregate the test results for a Load Test. As such, you'll have to check the logs from each worker to
-monitor its test reports.
+This LoadTest is NOT configured to publish results for aggregation across workers. As such, you'll have to check the
+logs from each worker to monitor its test reports.
 
 You can use a LoadTests created published `Events` to do this. E.g. let's find `basic-test`'s workers.
 
@@ -128,7 +128,7 @@ Metrics for period to: 15:18:20(+0000) (width: 9.013s)
 ....
 ```
 
-#### basic-test
+#### LoadTest manifest
 
 The `basic-test` load test is created using the `hack/basic-loadtest/basic-test-cr.yaml` manifest.
 
@@ -153,32 +153,6 @@ spec:
 ```
 
 It runs 2 workers against a test script loaded from `configmap/test-script`.
-
-#### other-test
-
-The `other-test` load test is created using the `hack/basic-loadtest/other-test-cr.yaml` manifest.
-
-```yaml
-apiVersion: loadtest.artillery.io/v1alpha1
-kind: LoadTest
-metadata:
-  name: other-test
-  namespace: default
-  labels:
-    "artillery.io/test-name": other-test
-    "artillery.io/component": loadtest
-    "artillery.io/part-of": loadtest
-
-spec:
-  # Add fields here
-  count: 4
-  environment: staging
-  testScript:
-    config:
-      configMap: test-script
-```
-
-It runs 4 workers against a test script loaded from `configmap/test-script`.
 
 ## Developing
 
@@ -419,4 +393,3 @@ Here's a basic example of how things can go wrong:
 
 - A user manually deletes a Pod using `kubectl`.
 - The Load Test's Job resource create another one Pod to restart the work, therefore duplicating test results. 
-

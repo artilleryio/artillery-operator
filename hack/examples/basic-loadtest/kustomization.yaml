@@ -14,4 +14,3 @@ configMapGenerator:
 
 resources:
   - basic-test-cr.yaml
-  - other-test-cr.yaml
