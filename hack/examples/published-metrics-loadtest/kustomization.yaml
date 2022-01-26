@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    "artillery.io/component": loadtest-config
+    "artillery.io/part-of": loadtest
+
+configMapGenerator:
+  - name: test-script
+    files:
+      - test-script.yaml
+
+resources:
+  - test-cr.yaml
