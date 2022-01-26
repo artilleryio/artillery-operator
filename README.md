@@ -156,6 +156,9 @@ It runs 2 workers against a test script loaded from `configmap/test-script`.
 
 The example is available at `hack/examples/published-metrics-loadtest`.
 
+Rather than checking logs for each worker instance individually, this example showcases how to use Prometheus as a
+central location to view and analyse test reports across Load Test workers.
+
 #### Working with Prometheus and Prometheus Pushgateway
 
 This load test will be publishing worker test report details as metrics to [Prometheus](https://prometheus.io) using
