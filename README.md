@@ -257,17 +257,42 @@ kubectl describe loadtests test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3
 #  Normal  Running    2m29s (x2 over 2m29s)  loadtest-controller  Running Load Test worker pod: test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3-gk92x
 ```
 
-There are now 4 workers running as Pods with different name. These Pod names correspond to Pushgateway job IDs making it
-easier to track your test report metrics between the cluster and the Pushgateway (and ultimately Prometheus).
+There are now 4 workers running as Pods with different names. These Pod names correspond to Pushgateway job IDs making
+it easier to track your test report metrics between the cluster and the Pushgateway (and ultimately Prometheus).
+
+#### Viewing test report metrics on the Pushgateway
 
 Navigating to the Pushgateway, in our case at `http://localhost:9091`, you'll see:
 ![](assets/pushgateway-with-workers.png)
 
-Clicking on a job you'll find the key test report metrics:
+Clicking on a job matching a Pod name displays the test report metrics for a specific worker:
 
 - `artillery_k8s_counter`, includes counter based metrics like `engine_http_responses`, etc...
 - `artillery_k8s_rates`, includes rates based metrics like `engine_http_request_rate`, etc...
 - `artillery_k8s_summaries`, includes summary based metrics like `engine_http_response_time_min`, etc...
+
+#### Viewing aggregated test report metrics on Prometheus
+
+In our case, we're running Prometheus in our K8s cluster, to access the dashboard we'll port-forward it port `9090`.
+
+```shell
+kubectl -n monitoring port-forward service/prometheus-k8s 9090
+# Forwarding from 127.0.0.1:9090 -> 9090
+# Forwarding from [::1]:9090 -> 9090
+```
+
+Navigating to the dashboard on `http://localhost:9090/` we can view aggregated test report metrics for our Load Test
+across all workers.
+
+Enter: `artillery_k8s_counters{load_test_id="test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3", metric="engine_http_requests"}`
+
+Displays `engine_http_requests` metric for Load Test `test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3`.
+
+![](assets/prometheus-dashboard.png)
+
+You can also visualise the metrics by clicking the Graph tab.
+
+![](assets/prometheus-dashboard-graph.png)
 
 ## Developing
 
