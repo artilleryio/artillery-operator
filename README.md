@@ -164,8 +164,12 @@ central location to view and analyse test reports across Load Test workers.
 This load test will be publishing worker test report details as metrics to [Prometheus](https://prometheus.io) using
 the [Prometheus Pushgateway](https://prometheus.io/docs/instrumenting/pushing/).
 
-Follow the instruction below if you don't have access to a Prometheus or Pushgateway instance. Otherwise, please skip
-ahead.
+**The Pushgateway is crucial to track our metrics in Prometheus**. Artillery will be pushing test report metrics to the
+Pushgateway and then Prometheus will scrape that data from the Pushgateway to make it available for monitoring.
+
+The instructions below will help you install Prometheus and the Pushgateway on your K8s cluster.
+
+__Skip Ahead__ if you already have your own Prometheus and Pushgateway instances.
 
 - Ensure you have [Helm](https://helm.sh/docs/intro/install/) installed locally.
 - If you haven't yet, download or clone
@@ -190,8 +194,15 @@ chmod +x hack/prom-pushgateway/up.sh
 # Forwarding from [::1]:9091 -> 9091
 ```
 
-You now have Prometheus and the Pushgateway running on K8s. Also, the Pushgateway is now accessible locally
-on `http://localhost:9091` or `http://host.docker.internal:9091`.
+The `hack/prom-pushgateway/up.sh` script has:
+
+- Installed Prometheus on K8s in the `monitoring` namespace.
+- Installed the Pushgateway on K8s and it's running as the `svc/prometheus-pushgateway` service in the `default`
+  namespace.
+- As a convenience, `svc/prometheus-pushgateway` has been port-forwarded to `http://localhost:9091`.
+
+Navigate to `http://localhost:9091` to view worker jobs already pushed to the Pushgateway - for now, there should be no
+listings.
 
 #### Publishing test reports metrics
 
@@ -206,7 +217,7 @@ config:
   plugins:
     publish-metrics:
       - type: prometheus
-        pushgateway: "http://host.docker.internal:9091"
+        pushgateway: "http://prometheus-pushgateway:9091"
         prefix: 'artillery_k8s'
         tags:
           - "load_test_id:test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3"
@@ -275,7 +286,7 @@ Clicking on a job matching a Pod name displays the test report metrics for a spe
 
 #### Viewing aggregated test report metrics on Prometheus
 
-In our case, we're running Prometheus in our K8s cluster, to access the dashboard we'll port-forward it port `9090`.
+In our case, we're running Prometheus in our K8s cluster, to access the dashboard we'll port-forward it to port `9090`.
 
 ```shell
 kubectl -n monitoring port-forward service/prometheus-k8s 9090
