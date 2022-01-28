@@ -16,7 +16,7 @@ config:
   plugins:
     publish-metrics:
       - type: prometheus
-        pushgateway: "http://host.docker.internal:9091"
+        pushgateway: "http://prometheus-pushgateway:9091"
         prefix: 'artillery_k8s'
         tags:
           - "load_test_id:test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3"
