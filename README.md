@@ -379,8 +379,8 @@ These manifests are located in the `config` directory.
 
 ##### Local development
 
-You can run the operator as a Go program outside of the cluster. This method is useful for development purposes to speed
-up deployment and testing.
+You can run the operator as a Go program outside the cluster. This method is useful for development purposes to speed up
+deployment and testing.
 
 The following command installs the CRDs in the cluster configured in your `~/.kube/config` file and runs the Operator as
 a Go program locally:
