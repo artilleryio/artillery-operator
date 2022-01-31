@@ -14,9 +14,12 @@ package controllers
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -57,6 +60,8 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		loadTest = &lt.LoadTest{}
 	)
 
+	telemetry(logger)
+
 	err := r.Get(ctx, req.NamespacedName, loadTest)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -91,6 +96,22 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// == Finish == == == == ==
 	// Everything went fine, don't requeue
 	return ctrl.Result{}, nil
+}
+
+func telemetry(logger logr.Logger) {
+	disabled, ok := os.LookupEnv("ARTILLERY_DISABLE_TELEMETRY")
+	if !ok {
+		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set!")
+		return
+	}
+
+	parsedDisabled, err := strconv.ParseBool(disabled)
+	if err != nil {
+		logger.Error(err, "ARTILLERY_DISABLE_TELEMETRY was not set with boolean type value. TELEMETRY REMAINS ENABLED")
+		return
+	}
+
+	logger.Info("ARTILLERY_DISABLE_TELEMETRY was set", "parsedDisabled", parsedDisabled)
 }
 
 // SetupWithManager sets up the controller with the Manager.
