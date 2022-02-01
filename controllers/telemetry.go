@@ -20,6 +20,27 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
+// const POSTHOG_TOKEN = '_uzX-_WJoVmE_tsLvu0OFD2tpd0HGz72D5sU1zM2hbs';
+
+// TO COLLECT:
+
+// Artillery version
+// OS identifier
+// whether artillery runs in CI or not
+//
+// General data:
+// - DistinctId -> operator instance running in docker use https://github.com/panta/machineid
+// - Source: "artillery-operator"
+// - version: "alpha"
+// - ContainerOS: os....
+// - WorkersImage: workerImage("ghcr.io/artilleryio/artillery-metrics-enabled:experimental")
+//
+// Events
+//  - test run
+// 	extra props:
+// 		- worker-count: 1
+// 		- environment: true/false
+
 type telemetryConfig struct {
 	Disable bool
 	Debug   bool
