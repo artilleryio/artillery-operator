@@ -69,7 +69,7 @@ func (r *LoadTestReconciler) ensureJob(
 	return nil, nil
 }
 
-func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
+func (r *LoadTestReconciler) job(v *lt.LoadTest, tCfg telemetryConfig) *v1.Job {
 	var (
 		parallelism  int32 = 1
 		completions  int32 = 1
@@ -111,16 +111,20 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 								"run",
 								"/data/test-script.yaml",
 							},
-							Env: []corev1.EnvVar{
-								{
-									Name: "WORKER_ID",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "metadata.name",
+							Env: append(
+								[]corev1.EnvVar{
+									// published metrics use WORKER_ID to connect the pod (worker) to a Pushgateway JobID
+									{
+										Name: "WORKER_ID",
+										ValueFrom: &corev1.EnvVarSource{
+											FieldRef: &corev1.ObjectFieldSelector{
+												FieldPath: "metadata.name",
+											},
 										},
 									},
 								},
-							},
+								tCfg.toEnvVar()...,
+							),
 						},
 					},
 					Volumes: []corev1.Volume{
