@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,7 +7,7 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package controllers
@@ -25,11 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-const (
-	workerImage   = "ghcr.io/artilleryio/artillery-metrics-enabled:experimental"
-	testScriptVol = "test-script"
 )
 
 func (r *LoadTestReconciler) ensureJob(
@@ -56,6 +51,30 @@ func (r *LoadTestReconciler) ensureJob(
 		}
 
 		r.Recorder.Eventf(instance, "Normal", "Created", "Created Load Test worker master job: %s", job.Name)
+		if err := telemetryEnqueue(
+			r.TelemetryClient,
+			r.TelemetryConfig,
+			telemetryEvent{
+				Name: "operator load test created",
+				Properties: map[string]interface{}{
+					"name":        hashEncode(instance.Name),
+					"namespace":   hashEncode(instance.Namespace),
+					"workers":     instance.Spec.Count,
+					"environment": len(instance.Spec.Environment) > 0,
+				},
+			},
+			logger,
+		); err != nil {
+			logger.Error(err,
+				"could not broadcast telemetry",
+				"telemetry disable",
+				r.TelemetryConfig.Disable,
+				"telemetry debug",
+				r.TelemetryConfig.Debug,
+				"event",
+				"operator load test created",
+			)
+		}
 
 		// job created successfully
 		return nil, nil
@@ -69,7 +88,7 @@ func (r *LoadTestReconciler) ensureJob(
 	return nil, nil
 }
 
-func (r *LoadTestReconciler) job(v *lt.LoadTest, tCfg telemetryConfig) *v1.Job {
+func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 	var (
 		parallelism  int32 = 1
 		completions  int32 = 1
@@ -100,10 +119,10 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest, tCfg telemetryConfig) *v1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:  v.Name,
-							Image: workerImage,
+							Image: WorkerImage,
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      testScriptVol,
+									Name:      TestScriptVol,
 									MountPath: "/data",
 								},
 							},
@@ -123,13 +142,13 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest, tCfg telemetryConfig) *v1.Job {
 										},
 									},
 								},
-								tCfg.toEnvVar()...,
+								r.TelemetryConfig.toEnvVar()...,
 							),
 						},
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: testScriptVol,
+							Name: TestScriptVol,
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{

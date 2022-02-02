@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,7 +7,7 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package controllers
@@ -18,6 +18,7 @@ import (
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 	"github.com/thoas/go-funk"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,7 +40,7 @@ const (
 	LoadTestCompleted
 )
 
-func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest) (*reconcile.Result, error) {
+func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest, logger logr.Logger) (*reconcile.Result, error) {
 	found := &v1.Job{}
 	err := r.Get(ctx, types.NamespacedName{
 		Name:      v.Name,
@@ -51,7 +52,7 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest) (
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if err := setStatus(ctx, v, r.Client, r.Recorder, found); err != nil {
+		if err := setStatus(ctx, v, r, found, logger); err != nil {
 			return err
 		}
 		return r.Status().Update(ctx, v)
@@ -64,18 +65,50 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest) (
 	return nil, nil
 }
 
-func setStatus(ctx context.Context, v *lt.LoadTest, ctl client.Client, r record.EventRecorder, job *v1.Job) error {
+func setStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job *v1.Job, logger logr.Logger) error {
 	observedStatus := observedStatus(job.Status)
 
 	setConditions(v, observedStatus)
-	if err := publishEventsIfAny(ctx, v, ctl, r, observedStatus); err != nil {
+	if err := publishEventsIfAny(ctx, v, r.Client, r.Recorder, observedStatus); err != nil {
 		return err
 	}
 	// Configuration should always happen after any events are published
 	configureStartupAndCompletion(v, observedStatus)
 	configureStatusAttrs(v, job)
+	enqueueCompletionIfDone(v, r, observedStatus, logger)
 
 	return nil
+}
+
+func enqueueCompletionIfDone(v *lt.LoadTest, r *LoadTestReconciler, o ObservedStatus, logger logr.Logger) {
+	switch o {
+	case LoadTestCompleted:
+		err := telemetryEnqueue(
+			r.TelemetryClient,
+			r.TelemetryConfig,
+			telemetryEvent{
+				Name: "operator load test completed",
+				Properties: map[string]interface{}{
+					"name":        hashEncode(v.Name),
+					"namespace":   hashEncode(v.Namespace),
+					"workers":     v.Spec.Count,
+					"environment": len(v.Spec.Environment) > 0,
+				},
+			},
+			logger,
+		)
+		if err != nil {
+			logger.Error(err,
+				"could not broadcast telemetry",
+				"telemetry disable",
+				r.TelemetryConfig.Disable,
+				"telemetry debug",
+				r.TelemetryConfig.Debug,
+				"event",
+				"operator load test completed",
+			)
+		}
+	}
 }
 
 func observedStatus(s v1.JobStatus) ObservedStatus {

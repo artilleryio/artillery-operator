@@ -13,14 +13,18 @@
 package controllers
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"os"
+	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/panta/machineid"
+	"github.com/posthog/posthog-go"
 	core "k8s.io/api/core/v1"
 )
-
-// const POSTHOG_TOKEN = '_uzX-_WJoVmE_tsLvu0OFD2tpd0HGz72D5sU1zM2hbs';
 
 // TO COLLECT:
 
@@ -36,18 +40,100 @@ import (
 // - WorkersImage: workerImage("ghcr.io/artilleryio/artillery-metrics-enabled:experimental")
 //
 // Events
-//  - test run
+//  - test created
 // 	extra props:
-// 		- worker-count: 1
+// 	  - name: hashed test name
+// 	  - namespace: hashed namespace name
+// 		- workers: 1
 // 		- environment: true/false
+//  - test completed
+// 	extra props:
+// 	  - name: hashed test name
+//    - namespace: hashed namespace
+// 		- workers: 1
 
-type telemetryConfig struct {
+type telemetryEvent struct {
+	Name       string
+	Properties map[string]interface{}
+}
+
+func protectedDistinctId() (string, error) {
+	return machineid.ProtectedID(AppName)
+}
+
+func hashEncode(v string) string {
+	h := sha1.New()
+	h.Write([]byte(v))
+	hashed := h.Sum(nil)
+	return base64.StdEncoding.EncodeToString(hashed)
+}
+
+type noopClient struct{}
+
+func (n *noopClient) Close() error                                              { return nil }
+func (n *noopClient) Enqueue(_ posthog.Message) error                           { return nil }
+func (n *noopClient) IsFeatureEnabled(_ string, _ string, _ bool) (bool, error) { return true, nil }
+func (n *noopClient) ReloadFeatureFlags() error                                 { return nil }
+func (n *noopClient) GetFeatureFlags() ([]posthog.FeatureFlag, error)           { return nil, nil }
+
+func NewTelemetryClient(tCfg TelemetryConfig) (posthog.Client, error) {
+	if tCfg.Disable {
+		return &noopClient{}, nil
+	}
+	return posthog.NewWithConfig(PosthogToken, posthog.Config{})
+}
+
+func telemetryEnqueue(client posthog.Client, config TelemetryConfig, event telemetryEvent, logger logr.Logger) error {
+	properties := buildProperties(event.Properties)
+	if config.Debug {
+		debugTelemetryProperties(properties, logger)
+		return nil
+	}
+
+	distinctId, err := protectedDistinctId()
+	if err != nil {
+		return err
+	}
+
+	if err := client.Enqueue(posthog.Capture{
+		DistinctId: distinctId,
+		Event:      event.Name,
+		Properties: properties,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func debugTelemetryProperties(props map[string]interface{}, logger logr.Logger) {
+	for k, v := range props {
+		logger.Info("ARTILLERY_TELEMETRY_DEBUG=true", k, v)
+	}
+}
+
+func buildProperties(extra map[string]interface{}) map[string]interface{} {
+	properties := map[string]interface{}{
+		"source":      AppName,
+		"version":     Version,
+		"containerOS": strings.ToLower(runtime.GOOS),
+		"workerImage": WorkerImage,
+	}
+
+	for key, val := range extra {
+		properties[key] = val
+	}
+
+	return properties
+}
+
+type TelemetryConfig struct {
 	Disable bool
 	Debug   bool
 }
 
-func newTelemetryConfig(logger logr.Logger) telemetryConfig {
-	result := telemetryConfig{}
+func NewTelemetryConfig(logger logr.Logger) TelemetryConfig {
+	result := TelemetryConfig{}
 
 	if getTelemetryDisableConfig(logger) {
 		result.Disable = true
@@ -58,6 +144,19 @@ func newTelemetryConfig(logger logr.Logger) telemetryConfig {
 	}
 
 	return result
+}
+
+func (t TelemetryConfig) toEnvVar() []core.EnvVar {
+	return []core.EnvVar{
+		{
+			Name:  "ARTILLERY_DISABLE_TELEMETRY",
+			Value: strconv.FormatBool(t.Disable),
+		},
+		{
+			Name:  "ARTILLERY_TELEMETRY_DEBUG",
+			Value: strconv.FormatBool(t.Debug),
+		},
+	}
 }
 
 func getTelemetryDisableConfig(logger logr.Logger) bool {
@@ -84,17 +183,4 @@ func getTelemetryDebugConfig(logger logr.Logger) bool {
 		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set with boolean type value. TELEMETRY DEBUG REMAINS DISABLED")
 	}
 	return parsedDebug
-}
-
-func (t telemetryConfig) toEnvVar() []core.EnvVar {
-	return []core.EnvVar{
-		{
-			Name:  "ARTILLERY_DISABLE_TELEMETRY",
-			Value: strconv.FormatBool(t.Disable),
-		},
-		{
-			Name:  "ARTILLERY_TELEMETRY_DEBUG",
-			Value: strconv.FormatBool(t.Debug),
-		},
-	}
 }
