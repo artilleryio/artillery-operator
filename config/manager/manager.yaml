@@ -33,9 +33,15 @@ spec:
           name: manager
           env:
             - name: ARTILLERY_DISABLE_TELEMETRY
-              value: "false"
+              valueFrom:
+                configMapKeyRef:
+                  name: telemetry
+                  key: ARTILLERY_DISABLE_TELEMETRY
             - name: ARTILLERY_TELEMETRY_DEBUG
-              value: "false"
+              valueFrom:
+                configMapKeyRef:
+                  name: telemetry
+                  key: ARTILLERY_TELEMETRY_DEBUG
           securityContext:
             allowPrivilegeEscalation: false
           livenessProbe:

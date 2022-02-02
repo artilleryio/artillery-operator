@@ -5,6 +5,10 @@
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
 VERSION ?= latest
 
+# ARTILLERY_DISABLE_TELEMETRY defines whether telemetry should be enabled or not.
+# By default, telemetry is disabled for all builds except public builds
+ARTILLERY_DISABLE_TELEMETRY ?= true
+
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
@@ -118,7 +122,7 @@ build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+	ARTILLERY_DISABLE_TELEMETRY=true go run ./main.go
 
 docker-build: test ## Build docker image with the manager.
 	docker build --platform ${IMAGE_PLATFORM} -t ${IMAGE_COMMIT_TAG} .
@@ -137,7 +141,10 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	ARTILLERY_DISABLE_TELEMETRY=${ARTILLERY_DISABLE_TELEMETRY} $(KUSTOMIZE) build config/default | kubectl apply -f -
+
+telemetry-deploy: export ARTILLERY_DISABLE_TELEMETRY=false
+telemetry-deploy: deploy
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
