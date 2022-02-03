@@ -99,6 +99,8 @@ func main() {
 	reconciler.TelemetryConfig = telemetryConfig
 	reconciler.TelemetryClient = telemetryClient
 
+	setupLog.Info("Telemetry config", "disable", telemetryConfig.Disable, "debug", telemetryConfig.Debug)
+
 	if err = reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LoadTest")
 		os.Exit(1)
