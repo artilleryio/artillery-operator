@@ -51,30 +51,7 @@ func (r *LoadTestReconciler) ensureJob(
 		}
 
 		r.Recorder.Eventf(instance, "Normal", "Created", "Created Load Test worker master job: %s", job.Name)
-		if err := telemetryEnqueue(
-			r.TelemetryClient,
-			r.TelemetryConfig,
-			telemetryEvent{
-				Name: "operator load test created",
-				Properties: map[string]interface{}{
-					"name":        hashEncode(instance.Name),
-					"namespace":   hashEncode(instance.Namespace),
-					"workers":     instance.Spec.Count,
-					"environment": len(instance.Spec.Environment) > 0,
-				},
-			},
-			logger,
-		); err != nil {
-			logger.Error(err,
-				"could not broadcast telemetry",
-				"telemetry disable",
-				r.TelemetryConfig.Disable,
-				"telemetry debug",
-				r.TelemetryConfig.Debug,
-				"event",
-				"operator load test created",
-			)
-		}
+		telemeterCreation(instance, r, logger)
 
 		// job created successfully
 		return nil, nil
