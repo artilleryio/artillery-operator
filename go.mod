@@ -3,10 +3,10 @@ module github.com/artilleryio/artillery-operator
 go 1.17
 
 require (
+	github.com/ezodude/machineid v1.0.2-0.20220203150729-9a5c71043528
 	github.com/go-logr/logr v0.4.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
-	github.com/panta/machineid v1.0.2-0.20201230110843-dd5292c35497
 	github.com/posthog/posthog-go v0.0.0-20211028072449-93c17c49e2b0
 	github.com/thoas/go-funk v0.9.1
 	k8s.io/api v0.22.2

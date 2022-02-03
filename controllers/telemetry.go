@@ -20,8 +20,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ezodude/machineid"
 	"github.com/go-logr/logr"
-	"github.com/panta/machineid"
 	"github.com/posthog/posthog-go"
 	core "k8s.io/api/core/v1"
 )
