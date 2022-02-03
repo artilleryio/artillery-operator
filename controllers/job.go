@@ -51,7 +51,6 @@ func (r *LoadTestReconciler) ensureJob(
 		}
 
 		r.Recorder.Eventf(instance, "Normal", "Created", "Created Load Test worker master job: %s", job.Name)
-		telemeterCreation(instance, r, logger)
 
 		// job created successfully
 		return nil, nil

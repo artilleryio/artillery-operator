@@ -17,12 +17,12 @@ import (
 	"github.com/go-logr/logr"
 )
 
-func telemeterCreation(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logger) {
+func telemeterActive(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logger) {
 	if err := telemetryEnqueue(
 		r.TelemetryClient,
 		r.TelemetryConfig,
 		telemetryEvent{
-			Name: "operator load test created",
+			Name: "operator test started",
 			Properties: map[string]interface{}{
 				"name":        hashEncode(v.Name),
 				"namespace":   hashEncode(v.Namespace),
@@ -49,7 +49,7 @@ func telemeterCompletion(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logg
 		r.TelemetryClient,
 		r.TelemetryConfig,
 		telemetryEvent{
-			Name: "operator load test completed",
+			Name: "operator test completed",
 			Properties: map[string]interface{}{
 				"name":        hashEncode(v.Name),
 				"namespace":   hashEncode(v.Namespace),

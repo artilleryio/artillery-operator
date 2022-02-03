@@ -167,6 +167,7 @@ func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTe
 		for _, pod := range podList.Items {
 			r.Recorder.Eventf(v, "Normal", "Running", "Running Load Test worker pod: %s", pod.Name)
 		}
+		telemeterActive(v, r, logger)
 
 	case o == LoadTestCompleted && v.Status.CompletionTime == nil:
 		r.Recorder.Event(v, "Normal", "Completed", "Load Test Completed")
