@@ -26,32 +26,6 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-// TO COLLECT:
-
-// Artillery version
-// OS identifier
-// whether artillery runs in CI or not
-//
-// General data:
-// - DistinctId -> operator instance running in docker use https://github.com/panta/machineid
-// - Source: "artillery-operator"
-// - version: "alpha"
-// - ContainerOS: os....
-// - WorkersImage: workerImage("ghcr.io/artilleryio/artillery-metrics-enabled:experimental")
-//
-// Events
-//  - test created
-// 	extra props:
-// 	  - name: hashed test name
-// 	  - namespace: hashed namespace name
-// 		- workers: 1
-// 		- environment: true/false
-//  - test completed
-// 	extra props:
-// 	  - name: hashed test name
-//    - namespace: hashed namespace
-// 		- workers: 1
-
 type telemetryEvent struct {
 	Name       string
 	Properties map[string]interface{}
@@ -163,12 +137,15 @@ func getTelemetryDisableConfig(logger logr.Logger) bool {
 	disable, ok := os.LookupEnv("ARTILLERY_DISABLE_TELEMETRY")
 	if !ok {
 		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set!")
+		return false
 	}
 
 	parsedDisable, err := strconv.ParseBool(disable)
 	if err != nil {
 		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set with boolean type value. TELEMETRY REMAINS ENABLED")
+		return false
 	}
+
 	return parsedDisable
 }
 
@@ -176,11 +153,14 @@ func getTelemetryDebugConfig(logger logr.Logger) bool {
 	debug, ok := os.LookupEnv("ARTILLERY_TELEMETRY_DEBUG")
 	if !ok {
 		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set!")
+		return false
 	}
 
 	parsedDebug, err := strconv.ParseBool(debug)
 	if err != nil {
 		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set with boolean type value. TELEMETRY DEBUG REMAINS DISABLED")
+		return false
 	}
+
 	return parsedDebug
 }
