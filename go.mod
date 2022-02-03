@@ -6,6 +6,8 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
+	github.com/panta/machineid v1.0.2-0.20201230110843-dd5292c35497
+	github.com/posthog/posthog-go v0.0.0-20211028072449-93c17c49e2b0
 	github.com/thoas/go-funk v0.9.1
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
@@ -41,9 +43,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/panta/machineid v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/posthog/posthog-go v0.0.0-20211028072449-93c17c49e2b0 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect

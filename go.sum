@@ -321,8 +321,8 @@ github.com/onsi/gomega v1.15.0/go.mod h1:cIuvLEne0aoVhAgh/O6ac0Op8WWw9H6eYCriF+t
 github.com/onsi/gomega v1.17.0 h1:9Luw4uT5HTjHTN8+aNcSThgH1vdXnmdJ8xIfZ4wyTRE=
 github.com/onsi/gomega v1.17.0/go.mod h1:HnhC7FXeEQY45zxNK3PPoIUhzk/80Xly9PcubAlGdZY=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
-github.com/panta/machineid v1.0.1 h1:IUIF47trYWR813A3cO/MnTEpesPFOhvejyauCGh1KI0=
-github.com/panta/machineid v1.0.1/go.mod h1:JXdlT3pyUqvDz7Pf1VeU2hRa1DIfOu0zBrj+xSvVbDg=
+github.com/panta/machineid v1.0.2-0.20201230110843-dd5292c35497 h1:gJAmsOoGvScuMv2p9irgGwH0dBfNZLcN6/LQx2jtCdQ=
+github.com/panta/machineid v1.0.2-0.20201230110843-dd5292c35497/go.mod h1:AROj156fsca3R3rNw3q9h8xFkos25W9P0ZG9gu+3Uf0=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/peterbourgon/diskv v2.0.1+incompatible/go.mod h1:uqqh8zWWbv1HBMNONnaR/tNboyR3/BZd58JJSHlUSCU=
