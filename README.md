@@ -183,7 +183,7 @@ kubectl get all --all-namespaces
 
 # Run setup script
 chmod +x hack/prom-pushgateway/up.sh
-.hack/prom-pushgateway/up.sh
+./hack/prom-pushgateway/up.sh
 # ...
 # ...
 # 1. Get the application URL by running these commands:
