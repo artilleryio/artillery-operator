@@ -26,7 +26,7 @@ func telemeterActive(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logger) 
 			Properties: map[string]interface{}{
 				"name":        hashEncode(v.Name),
 				"namespace":   hashEncode(v.Namespace),
-				"workers":     v.Spec.Count,
+				"count":       v.Spec.Count,
 				"environment": len(v.Spec.Environment) > 0,
 			},
 		},
@@ -53,7 +53,7 @@ func telemeterCompletion(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logg
 			Properties: map[string]interface{}{
 				"name":        hashEncode(v.Name),
 				"namespace":   hashEncode(v.Namespace),
-				"workers":     v.Spec.Count,
+				"count":       v.Spec.Count,
 				"environment": len(v.Spec.Environment) > 0,
 			},
 		},
