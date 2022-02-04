@@ -15,6 +15,7 @@ package controllers
 import (
 	"crypto/sha1"
 	"encoding/base64"
+	"net"
 	"os"
 	"runtime"
 	"strconv"
@@ -40,6 +41,20 @@ func hashEncode(v string) string {
 	h.Write([]byte(v))
 	hashed := h.Sum(nil)
 	return base64.StdEncoding.EncodeToString(hashed)
+}
+
+// getIPAddress gets the ip address using the preferred outbound ip of this machine
+func getIPAddress() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return ""
+	}
+	defer func(conn net.Conn) {
+		_ = conn.Close()
+	}(conn)
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return string(localAddr.IP)
 }
 
 type noopClient struct{}
@@ -87,11 +102,19 @@ func debugTelemetryProperties(props map[string]interface{}, logger logr.Logger) 
 }
 
 func buildProperties(extra map[string]interface{}) map[string]interface{} {
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = ""
+	}
+
 	properties := map[string]interface{}{
-		"source":      AppName,
-		"version":     Version,
-		"containerOS": strings.ToLower(runtime.GOOS),
-		"workerImage": WorkerImage,
+		"source":       AppName,
+		"version":      Version,
+		"containerOS":  strings.ToLower(runtime.GOOS),
+		"workerImage":  WorkerImage,
+		"ipHash":       hashEncode(getIPAddress()),
+		"hostnameHash": hashEncode(hostname),
+		"$ip":          nil,
 	}
 
 	for key, val := range extra {
