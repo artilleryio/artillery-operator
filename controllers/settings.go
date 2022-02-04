@@ -17,7 +17,7 @@ const (
 
 	Version = "version"
 
-	WorkerImage = "ghcr.io/artilleryio/artillery-metrics-enabled:experimental"
+	WorkerImage = "ghcr.io/artilleryio/artillery-metrics-enabled:v2.0.0"
 
 	TestScriptVol = "test-script"
 

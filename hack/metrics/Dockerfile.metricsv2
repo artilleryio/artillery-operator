@@ -8,7 +8,6 @@ WORKDIR /home/node/artillery
 
 RUN npm \
     install \
-    "https://github.com/artilleryio/artillery-plugin-publish-metrics.git#ezo/art-221-implement-pushgateway-integration-based" \
-    --save
+    artillery-plugin-publish-metrics@2.0.0 --save
 
 ENTRYPOINT ["/home/node/artillery/bin/artillery"]

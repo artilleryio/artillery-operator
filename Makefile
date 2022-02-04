@@ -60,7 +60,7 @@ endif
 
 # Artillery with enabled prometheus metrics publishing image details
 ARTILLERY_METRICS_IMAGE_PLATFORM ?= linux/amd64  ## Use linux/arm64 for Apple silicon builds
-ARTILLERY_METRICS_IMAGE_VERSION ?= experimental
+ARTILLERY_METRICS_IMAGE_VERSION ?= v2.0.0
 ARTILLERY_METRICS_IMAGE_TAG ?= artillery-metrics-enabled:${ARTILLERY_METRICS_IMAGE_VERSION}
 ARTILLERY_METRICS_IMAGE_REMOTE ?= $(IMAGE_REPO_OWNER)/$(ARTILLERY_METRICS_IMAGE_TAG)
 
