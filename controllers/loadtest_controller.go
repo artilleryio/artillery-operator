@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,7 +7,7 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package controllers
@@ -17,6 +17,7 @@ import (
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/posthog/posthog-go"
 	v1 "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,8 +31,10 @@ import (
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Scheme          *runtime.Scheme
+	Recorder        record.EventRecorder
+	TelemetryConfig TelemetryConfig
+	TelemetryClient posthog.Client
 }
 
 // +kubebuilder:rbac:groups=loadtest.artillery.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
@@ -77,7 +80,7 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return *result, err
 	}
 
-	result, err = r.updateStatus(ctx, loadTest)
+	result, err = r.updateStatus(ctx, loadTest, logger)
 	if result != nil {
 		logger.Error(err, "Failed to update LoadTest status")
 		return *result, err

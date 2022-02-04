@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,7 +7,7 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package controllers
@@ -25,11 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-const (
-	workerImage   = "ghcr.io/artilleryio/artillery-metrics-enabled:experimental"
-	testScriptVol = "test-script"
 )
 
 func (r *LoadTestReconciler) ensureJob(
@@ -100,10 +95,10 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:  v.Name,
-							Image: workerImage,
+							Image: WorkerImage,
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      testScriptVol,
+									Name:      TestScriptVol,
 									MountPath: "/data",
 								},
 							},
@@ -111,21 +106,25 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 								"run",
 								"/data/test-script.yaml",
 							},
-							Env: []corev1.EnvVar{
-								{
-									Name: "WORKER_ID",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "metadata.name",
+							Env: append(
+								[]corev1.EnvVar{
+									// published metrics use WORKER_ID to connect the pod (worker) to a Pushgateway JobID
+									{
+										Name: "WORKER_ID",
+										ValueFrom: &corev1.EnvVarSource{
+											FieldRef: &corev1.ObjectFieldSelector{
+												FieldPath: "metadata.name",
+											},
 										},
 									},
 								},
-							},
+								r.TelemetryConfig.toEnvVar()...,
+							),
 						},
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: testScriptVol,
+							Name: TestScriptVol,
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{

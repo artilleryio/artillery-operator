@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,7 +7,7 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package controllers
@@ -18,13 +18,13 @@ import (
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/go-logr/logr"
 	"github.com/thoas/go-funk"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/duration"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,7 +39,7 @@ const (
 	LoadTestCompleted
 )
 
-func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest) (*reconcile.Result, error) {
+func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest, logger logr.Logger) (*reconcile.Result, error) {
 	found := &v1.Job{}
 	err := r.Get(ctx, types.NamespacedName{
 		Name:      v.Name,
@@ -51,7 +51,7 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest) (
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if err := setStatus(ctx, v, r.Client, r.Recorder, found); err != nil {
+		if err := relayStatus(ctx, v, r, found, logger); err != nil {
 			return err
 		}
 		return r.Status().Update(ctx, v)
@@ -64,11 +64,11 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest) (
 	return nil, nil
 }
 
-func setStatus(ctx context.Context, v *lt.LoadTest, ctl client.Client, r record.EventRecorder, job *v1.Job) error {
+func relayStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job *v1.Job, logger logr.Logger) error {
 	observedStatus := observedStatus(job.Status)
 
 	setConditions(v, observedStatus)
-	if err := publishEventsIfAny(ctx, v, ctl, r, observedStatus); err != nil {
+	if err := broadcastIfActiveOrCompleted(ctx, v, r, observedStatus, logger); err != nil {
 		return err
 	}
 	// Configuration should always happen after any events are published
@@ -157,19 +157,21 @@ func configureStartupAndCompletion(v *lt.LoadTest, o ObservedStatus) {
 	}
 }
 
-func publishEventsIfAny(ctx context.Context, v *lt.LoadTest, ctl client.Client, r record.EventRecorder, o ObservedStatus) error {
+func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, o ObservedStatus, logger logr.Logger) error {
 	switch {
 	case o == LoadTestActive && v.Status.StartTime == nil:
-		podList, err := getPods(ctx, v, ctl)
+		podList, err := getPods(ctx, v, r.Client)
 		if err != nil {
 			return err
 		}
 		for _, pod := range podList.Items {
-			r.Eventf(v, "Normal", "Running", "Running Load Test worker pod: %s", pod.Name)
+			r.Recorder.Eventf(v, "Normal", "Running", "Running Load Test worker pod: %s", pod.Name)
 		}
+		telemeterActive(v, r, logger)
 
 	case o == LoadTestCompleted && v.Status.CompletionTime == nil:
-		r.Event(v, "Normal", "Completed", "Load Test Completed")
+		r.Recorder.Event(v, "Normal", "Completed", "Load Test Completed")
+		telemeterCompletion(v, r, logger)
 	}
 
 	return nil

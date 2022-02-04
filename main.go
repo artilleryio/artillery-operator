@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,15 +7,17 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package main
 
 import (
 	"flag"
+	"io"
 	"os"
 
+	"github.com/go-logr/logr"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -42,6 +44,12 @@ func init() {
 
 	utilruntime.Must(loadtestv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
+}
+
+func doClose(closer io.Closer, msg string, logger logr.Logger) {
+	if err := closer.Close(); err != nil {
+		logger.Error(err, msg)
+	}
 }
 
 func main() {
@@ -74,11 +82,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.LoadTestReconciler{
+	reconciler := &controllers.LoadTestReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("loadtest-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}
+
+	telemetryConfig := controllers.NewTelemetryConfig(setupLog)
+	telemetryClient, err := controllers.NewTelemetryClient(telemetryConfig)
+	if err != nil {
+		setupLog.Error(err, "unable to create telemetry client")
+		os.Exit(1)
+	}
+	defer doClose(telemetryClient, "could not close Posthog telemetry client", setupLog)
+
+	reconciler.TelemetryConfig = telemetryConfig
+	reconciler.TelemetryClient = telemetryClient
+
+	setupLog.Info("Telemetry config", "disable", telemetryConfig.Disable, "debug", telemetryConfig.Debug)
+
+	if err = reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LoadTest")
 		os.Exit(1)
 	}
