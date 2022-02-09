@@ -112,9 +112,6 @@ func setConditions(v *lt.LoadTest, o ObservedStatus) {
 			LastTransitionTime: metav1.Now(),
 			LastProbeTime:      metav1.Now(),
 		}
-		if v.Status.Failed > 0 {
-			completed.Status = corev1.ConditionFalse
-		}
 		conditionsMap[lt.LoadTestCompleted] = completed
 	}
 
