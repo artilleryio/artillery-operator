@@ -2,6 +2,10 @@ module github.com/artilleryio/artillery-operator
 
 go 1.17
 
+replace github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
+
+replace github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.25 //indirect
+
 require (
 	github.com/ezodude/machineid v1.0.2-0.20220203150729-9a5c71043528
 	github.com/go-logr/logr v0.4.0
