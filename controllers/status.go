@@ -66,6 +66,7 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest, l
 
 func relayStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job *v1.Job, logger logr.Logger) error {
 	observedStatus := observedStatus(job.Status)
+	configureStatesAndPrinterColumns(v, job)
 
 	setConditions(v, observedStatus)
 	if err := broadcastIfActiveOrCompleted(ctx, v, r, observedStatus, logger); err != nil {
@@ -73,7 +74,6 @@ func relayStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job
 	}
 	// Configuration should always happen after any events are published
 	configureStartupAndCompletion(v, observedStatus)
-	configureStatusAttrs(v, job)
 
 	return nil
 }
@@ -126,6 +126,23 @@ func setConditions(v *lt.LoadTest, o ObservedStatus) {
 	}).([]lt.LoadTestCondition)
 }
 
+func configureStatesAndPrinterColumns(v *lt.LoadTest, job *v1.Job) {
+	configureStates(v, job)
+	configurePrinterColumns(v, job)
+}
+
+func configureStates(v *lt.LoadTest, job *v1.Job) {
+	v.Status.Active = job.Status.Active
+	v.Status.Succeeded = job.Status.Succeeded
+	v.Status.Failed = job.Status.Failed
+}
+
+func configurePrinterColumns(v *lt.LoadTest, job *v1.Job) {
+	v.Status.Duration = loadTestDuration(v.Status)
+	v.Status.Completions = loadTestCompletions(v.Status, job.Spec.Completions, job.Spec.Parallelism)
+	v.Status.Image = job.Spec.Template.Spec.Containers[0].Image
+}
+
 func conditionsMap(conditions []lt.LoadTestCondition) map[lt.LoadTestConditionType]lt.LoadTestCondition {
 	out := funk.ToMap(conditions, "Type").(map[lt.LoadTestConditionType]lt.LoadTestCondition)
 	if _, ok := out[lt.LoadTestProgressing]; !ok {
@@ -149,10 +166,6 @@ func configureStartupAndCompletion(v *lt.LoadTest, o ObservedStatus) {
 		if v.Status.CompletionTime == nil {
 			now := metav1.Now()
 			v.Status.CompletionTime = &now
-		}
-
-		if v.Status.Failed > 0 {
-			v.Status.CompletionTime = nil
 		}
 	}
 }
@@ -187,15 +200,6 @@ func getPods(ctx context.Context, v *lt.LoadTest, ctl client.Client) (*corev1.Po
 		return nil, err
 	}
 	return podList, nil
-}
-
-func configureStatusAttrs(v *lt.LoadTest, job *v1.Job) {
-	v.Status.Active = job.Status.Active
-	v.Status.Succeeded = job.Status.Succeeded
-	v.Status.Failed = job.Status.Failed
-	v.Status.Duration = loadTestDuration(v.Status)
-	v.Status.Completions = loadTestCompletions(v.Status, job.Spec.Completions, job.Spec.Parallelism)
-	v.Status.Image = job.Spec.Template.Spec.Containers[0].Image
 }
 
 func loadTestDuration(status lt.LoadTestStatus) string {
