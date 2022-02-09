@@ -180,7 +180,14 @@ func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTe
 		telemeterActive(v, r, logger)
 
 	case o == LoadTestCompleted && v.Status.CompletionTime == nil:
-		r.Recorder.Event(v, "Normal", "Completed", "Load Test Completed")
+		msg := "Load Test completed"
+
+		if v.Status.Failed > 0 {
+			r.Recorder.Event(v, "Warning", "Failed", fmt.Sprintf("%s with failed workers", msg))
+		} else {
+			r.Recorder.Event(v, "Normal", "Completed", msg)
+		}
+
 		telemeterCompletion(v, r, logger)
 	}
 
