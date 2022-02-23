@@ -4,9 +4,24 @@
 
 # Artillery Operator
 
-The Artillery Operator is an implementation of
-a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) that
-enables Kubernetes native load testing in your cluster.
+An operator to create and run distributed Artillery load tests from a Kubernetes cluster, at scale.
+
+- It implements
+  the [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes).
+- Created Load tests are first class Kubernetes citizens based
+  on [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+- Load tests run existing
+  [Artillery test scripts](https://www.artillery.io/docs/guides/guides/test-script-reference).
+
+You can interact with created and running load tests via kubectl. And, monitor them with K8s UI tools too.
+
+__SREs__, use the Operator to set up a self-service load testing framework on any K8s cluster.
+
+__Developers__, create and apply [CRs manifests](#loadtest-manifest) to run distributed load tests from K8s at scale.
+
+## How it works
+
+<img width="800" alt="Operator architecture" src="assets/operator-architecture.png">
 
 ## Trial in your own cluster
 
@@ -142,7 +157,6 @@ metadata:
     "artillery.io/part-of": loadtest
 
 spec:
-  # Add fields here
   count: 2
   environment: dev
   testScript:
@@ -275,8 +289,8 @@ There are now 4 workers running as Pods with different names. These Pod names co
 #### Viewing test report metrics on the Pushgateway
 
 Navigating to the Pushgateway, in our case at `http://localhost:9091`, you'll see:
-<br/>
-![Pushgateway dashboard](assets/pushgateway-with-workers.png)
+
+<img width="800" alt="pushgateway with workers" src="assets/pushgateway-with-workers.png">
 
 Clicking on a job matching a Pod name displays the test report metrics for a specific worker:
 
@@ -305,11 +319,11 @@ artillery_k8s_counters{load_test_id="test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3",
 
 This displays `engine_http_requests` metric for Load Test `test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3`.
 
-![Prometheus dashboard](assets/prometheus-dashboard.png)
+<img width="800" alt="prometheus dashboard" src="assets/prometheus-dashboard.png">
 
 Now let's visualise the metrics by clicking the Graph tab.
 
-![Prometheus dashboard with graph](assets/prometheus-dashboard-graph.png)
+<img width="800" alt="prometheus dashboard with graph" src="assets/prometheus-dashboard-graph.png">
 
 ## Developing
 
