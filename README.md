@@ -4,9 +4,19 @@
 
 # Artillery Operator
 
-The Artillery Operator is an implementation of
-a [Kubernetes Operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) that
-enables Kubernetes native load testing in your cluster.
+[//]: # (The Artillery Operator is an implementation of)
+
+[//]: # (a [Kubernetes Operator]&#40;https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes&#41; that)
+
+[//]: # (enables Kubernetes native load testing in your cluster.)
+
+The Artillery Operator implements
+the [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) to
+create and run distributed load tests on Kubernetes, at scale.
+
+Operator created load tests use existing Artillery test scripts while being based on CRDs. Meaning, they are first class
+Kubernetes citizens you can interact with via kubectl. And, they can be monitored with Kubernetes UI tools like any
+other Kubernetes object.
 
 ## Trial in your own cluster
 
