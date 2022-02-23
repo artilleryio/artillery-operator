@@ -4,23 +4,20 @@
 
 # Artillery Operator
 
-The Artillery Operator allows you to create and run distributed Artillery load tests from a Kubernetes cluster, at
-scale.
+An operator to create and run distributed Artillery load tests from a Kubernetes cluster, at scale.
 
 - It implements
   the [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes).
 - Created Load tests are first class Kubernetes citizens based
-  on [CRs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+  on [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 - Load tests run existing
   [Artillery test scripts](https://www.artillery.io/docs/guides/guides/test-script-reference).
 
-This means, you can interact with created and running load tests via kubectl. And, they can be monitored with Kubernetes
-UI tools like any other Kubernetes object.
+You can interact with created and running load tests via kubectl. And, monitor them with K8s UI tools too.
 
-__SREs__, can use the Operator to set up a self-service load testing framework on any K8s cluster.
+__SREs__, use the Operator to set up a self-service load testing framework on any K8s cluster.
 
-__Developers__, can create and apply [CRs manifests](#loadtest-manifest) to run distributed load tests from K8s at
-scale.
+__Developers__, create and apply [CRs manifests](#loadtest-manifest) to run distributed load tests from K8s at scale.
 
 ## Trial in your own cluster
 
