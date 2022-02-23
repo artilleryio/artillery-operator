@@ -19,6 +19,10 @@ __SREs__, use the Operator to set up a self-service load testing framework on an
 
 __Developers__, create and apply [CRs manifests](#loadtest-manifest) to run distributed load tests from K8s at scale.
 
+## How it works
+
+<img width="800" alt="Operator architecture" src="assets/operator-architecture.png">
+
 ## Trial in your own cluster
 
 This deploys the alpha operator image:
