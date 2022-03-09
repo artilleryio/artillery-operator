@@ -78,15 +78,40 @@ func relayStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job
 	return nil
 }
 
+// observedStatus relays a load test's observed status from its related Job
 func observedStatus(s v1.JobStatus) ObservedStatus {
 	switch {
-	case s.Active > (s.Succeeded + s.Failed):
+	case jobConditionsActive(s) && (s.Active > (s.Succeeded + s.Failed)):
 		return LoadTestActive
-	case s.Active == 0 && (s.Succeeded > 0 || s.Failed > 0):
+	case jobConditionsCompleted(s) && (s.Active == 0 && (s.Succeeded > 0 || s.Failed > 0)):
 		return LoadTestCompleted
 	default:
 		return LoadTestInactive
 	}
+}
+
+// jobConditionsActive use Job conditions to conclude if a job is active
+func jobConditionsActive(s v1.JobStatus) bool {
+	suspended, complete, failed := jobConditions(s)
+	running := suspended == false && complete == false && failed == false
+	return s.StartTime != nil && running
+}
+
+// jobConditionsCompleted use Job conditions to conclude if a job has completed
+func jobConditionsCompleted(s v1.JobStatus) bool {
+	suspended, complete, failed := jobConditions(s)
+	completed := suspended == false && complete == true && failed == false
+	return s.StartTime != nil && s.CompletionTime != nil && completed
+}
+
+// jobConditions returns whether a Job is suspended, complete or failed by traversing all found Conditions
+func jobConditions(s v1.JobStatus) (suspended bool, complete bool, failed bool) {
+	for _, c := range s.Conditions {
+		suspended = c.Type == v1.JobSuspended
+		complete = c.Type == v1.JobComplete
+		failed = c.Type == v1.JobFailed
+	}
+	return
 }
 
 func setConditions(v *lt.LoadTest, o ObservedStatus) {
