@@ -19,20 +19,24 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+const cliName = "kubectl artillery"
+
 func NewCmdArtillery(io genericclioptions.IOStreams) *cobra.Command {
+
 	cmd := &cobra.Command{
 		Short:        "Use artillery.io operator helpers",
 		Use:          "artillery",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
-				return fmt.Errorf("%q is not a %[1]s command\nSee '%[1]s --help'", args[0], "kubectl artillery")
+				return fmt.Errorf("%q is not a %[1]s command\nSee '%[1]s --help'", args[0], cliName)
 			}
 			cmd.HelpFunc()(cmd, args)
-			_, _ = io.Out.Write([]byte("\n"))
-			_, _ = io.Out.Write([]byte("kubectl artillery says hello"))
 			return nil
 		},
 	}
+
+	cmd.AddCommand(newCmdGenerate(io, cliName))
+
 	return cmd
 }
