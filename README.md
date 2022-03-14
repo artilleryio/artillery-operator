@@ -84,7 +84,7 @@ kubectl apply -k hack/examples/basic-loadtest
 # configmap/test-script created
 # loadtest.loadtest.artillery.io/basic-test created
 
-kubectl get loadtests basic-test other-test
+kubectl get loadtests basic-test
 # NAME         COMPLETIONS   DURATION   AGE   ENVIRONMENT   IMAGE
 # basic-test   0/2           55s        55s   dev           artilleryio/artillery:latest
 ```
