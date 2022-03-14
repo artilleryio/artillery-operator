@@ -21,7 +21,7 @@ import (
 
 const cliName = "kubectl artillery"
 
-func NewCmdArtillery(io genericclioptions.IOStreams) *cobra.Command {
+func NewCmdArtillery(workingDir string, io genericclioptions.IOStreams) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Short:        "Use artillery.io operator helpers",
@@ -36,7 +36,7 @@ func NewCmdArtillery(io genericclioptions.IOStreams) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(newCmdGenerate(io, cliName))
+	cmd.AddCommand(newCmdGenerate(workingDir, io, cliName))
 
 	return cmd
 }

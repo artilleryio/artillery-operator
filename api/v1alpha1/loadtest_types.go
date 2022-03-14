@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021.
+ * Copyright (c) 2021-2022.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0.
@@ -7,12 +7,14 @@
  * If a copy of the MPL was not distributed with
  * this file, You can obtain one at
  *
- *     http://mozilla.org/MPL/2.0/
+ *   http://mozilla.org/MPL/2.0/
  */
 
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -37,8 +39,8 @@ type Processor struct {
 }
 
 type External struct {
-	Payload   Payload   `json:"payload,omitempty"`
-	Processor Processor `json:"processor,omitempty"`
+	Payload   *Payload   `json:"payload,omitempty"`
+	Processor *Processor `json:"processor,omitempty"`
 }
 
 type Config struct {
@@ -46,8 +48,8 @@ type Config struct {
 }
 
 type TestScript struct {
-	Config   Config   `json:"config,omitempty"`
-	External External `json:"external,omitempty"`
+	Config   Config    `json:"config,omitempty"`
+	External *External `json:"external,omitempty"`
 }
 
 // LoadTestSpec defines the desired state of LoadTest
@@ -121,10 +123,10 @@ type LoadTestStatus struct {
 
 	// Formatted load test worker pod completions calculated from the underlying succeeded jobs vs configured
 	// job completions/parallelism
-	Completions string `json:"completions"`
+	Completions string `json:"completions,omitempty"`
 
 	// The image used to run the load tests
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -142,6 +144,21 @@ type LoadTest struct {
 
 	Spec   LoadTestSpec   `json:"spec,omitempty"`
 	Status LoadTestStatus `json:"status,omitempty"`
+}
+
+func (lt *LoadTest) GenerateJson() ([]byte, error) {
+	j, err := json.Marshal(lt)
+	if err != nil {
+		return nil, err
+	}
+
+	var temp map[string]interface{}
+	if err := json.Unmarshal(j, &temp); err != nil {
+		return nil, err
+	}
+	delete(temp, "status")
+
+	return json.Marshal(temp)
 }
 
 // +kubebuilder:object:root=true
