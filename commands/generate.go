@@ -13,7 +13,6 @@
 package commands
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -21,8 +20,8 @@ import (
 	"path/filepath"
 
 	"github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/artilleryio/artillery-operator/internal/artillery"
 	"github.com/spf13/cobra"
-	yaml3 "gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -137,13 +136,23 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 		}
 
 		manifestPath := path.Join(out, "loadtest-cr.yaml")
-		written, err := writeTo(manifestPath, loadTest, 2)
+		mWritten, err := writeTo(manifestPath, loadTest, 2)
 		if err != nil {
 			return err
 		}
 
-		if written > 0 {
+		kustomization := artillery.NewKustomization(configMapName, testScriptPath, "loadtest")
+		kustomizationPath := path.Join(out, "kustomization.yaml")
+		kWritten, err := writeTo(kustomizationPath, kustomization, 2)
+		if err != nil {
+			return err
+		}
+
+		if mWritten > 0 {
 			msg = fmt.Sprintf("%s\n  >> loadtest manifests created at: [%s]", msg, out)
+		}
+		if kWritten > 0 {
+			msg = fmt.Sprintf("%s\n  >> loadtest kustomization created at: [%s]", msg, out)
 		}
 
 		_, _ = io.Out.Write([]byte(msg))
@@ -176,8 +185,8 @@ func formatCmdExample(doc, cliName string) string {
 	return fmt.Sprintf(doc, cliName)
 }
 
-func writeTo(filePath string, v *v1alpha1.LoadTest, indent int) (n int64, err error) {
-	data, err := marshalWithIndent(v, indent)
+func writeTo(filePath string, v artillery.FileMarshaler, indent int) (n int64, err error) {
+	data, err := v.MarshalWithIndent(indent)
 	if err != nil {
 		return int64(0), err
 	}
@@ -198,41 +207,4 @@ func writeTo(filePath string, v *v1alpha1.LoadTest, indent int) (n int64, err er
 	}
 
 	return int64(written), file.Close()
-}
-
-func marshalWithIndent(v *v1alpha1.LoadTest, indent int) ([]byte, error) {
-	j, err := v.GenerateJson()
-	if err != nil {
-		return nil, err
-	}
-
-	y, err := jsonToYaml(j, indent)
-	if err != nil {
-
-		return nil, err
-	}
-
-	return y, nil
-}
-
-func jsonToYaml(j []byte, spaces int) ([]byte, error) {
-	// Convert the JSON to an object.
-	var jsonObj interface{}
-	// We are using yaml.Unmarshal here (instead of json.Unmarshal) because the
-	// Go JSON library doesn't try to pick the right number type (int, float,
-	// etc.) when unmarshling to interface{}, it just picks float64
-	// universally. go-yaml does go through the effort of picking the right
-	// number type, so we can preserve number type throughout this process.
-	err := yaml3.Unmarshal(j, &jsonObj)
-	if err != nil {
-		return nil, err
-	}
-
-	var b bytes.Buffer
-	encoder := yaml3.NewEncoder(&b)
-	encoder.SetIndent(spaces)
-	if err := encoder.Encode(jsonObj); err != nil {
-		return nil, err
-	}
-	return b.Bytes(), nil
 }
