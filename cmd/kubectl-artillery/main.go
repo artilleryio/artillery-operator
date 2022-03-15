@@ -13,7 +13,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/artilleryio/artillery-operator/commands"
@@ -21,10 +20,7 @@ import (
 )
 
 func main() {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Failed to locate the cuurent working directory")
-	}
+	wd := "."
 	root := commands.NewCmdArtillery(wd, genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
 	if err := root.Execute(); err != nil {
 		os.Exit(1)

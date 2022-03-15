@@ -13,9 +13,6 @@
 package v1alpha1
 
 import (
-	"encoding/json"
-
-	"github.com/artilleryio/artillery-operator/internal/artillery"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -145,36 +142,6 @@ type LoadTest struct {
 
 	Spec   LoadTestSpec   `json:"spec,omitempty"`
 	Status LoadTestStatus `json:"status,omitempty"`
-}
-
-func (lt *LoadTest) MarshalWithIndent(indent int) ([]byte, error) {
-	j, err := lt.json()
-	if err != nil {
-		return nil, err
-	}
-
-	y, err := artillery.JsonToYaml(j, indent)
-	if err != nil {
-
-		return nil, err
-	}
-
-	return y, nil
-}
-
-func (lt *LoadTest) json() ([]byte, error) {
-	j, err := json.Marshal(lt)
-	if err != nil {
-		return nil, err
-	}
-
-	var temp map[string]interface{}
-	if err := json.Unmarshal(j, &temp); err != nil {
-		return nil, err
-	}
-	delete(temp, "status")
-
-	return json.Marshal(temp)
 }
 
 // +kubebuilder:object:root=true

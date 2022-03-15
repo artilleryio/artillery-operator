@@ -17,17 +17,19 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
+	"strings"
 
 	"github.com/artilleryio/artillery-operator/api/v1alpha1"
 	"github.com/artilleryio/artillery-operator/internal/artillery"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 const generateExample = `- $ %[1]s generate <load-test-name> --script path/to/test-script
 - $ %[1]s generate <load-test-name> -s path/to/test-script
+- $ %[1]s generate <load-test-name> -s path/to/test-script [--env ]
+- $ %[1]s generate <load-test-name> -s path/to/test-script [-e ]
 - $ %[1]s generate <load-test-name> -s path/to/test-script [--out ]
 - $ %[1]s generate <load-test-name> -s path/to/test-script [-o ]
 - $ %[1]s generate <load-test-name> -s path/to/test-script [--out ] [--count ]
@@ -50,6 +52,13 @@ func newCmdGenerate(workingDir string, io genericclioptions.IOStreams, cliName s
 		"s",
 		"",
 		"Specify path to artillery test-script file",
+	)
+
+	flags.StringP(
+		"env",
+		"e",
+		"dev",
+		"Optional. Specify the load test environment - defaults to dev",
 	)
 
 	flags.StringP(
@@ -84,6 +93,11 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 			return err
 		}
 
+		env, err := cmd.Flags().GetString("env")
+		if err != nil {
+			return err
+		}
+
 		outPath, err := cmd.Flags().GetString("out")
 		if err != nil {
 			return err
@@ -96,63 +110,27 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 
 		loadTestName := args[0]
 		configMapName := fmt.Sprintf("%s-test-script", loadTestName)
-		//TODO: validate configMapName is a valid K8s name
 
-		msg := fmt.Sprintf("  >> load test name: [%s]\n  >> test-script path: [%s]", loadTestName, testScriptPath)
-		if len(outPath) > 0 {
-			msg = fmt.Sprintf("%s\n  >> test-script path: [%s]", msg, outPath)
+		targetDir, err := getOrCreateTargetDir(workingDir, outPath)
+		if err != nil {
+			return err
 		}
 
-		kind := "LoadTest"
-		apiVersion := "loadtest.artillery.io/v1alpha1"
+		loadTest := v1alpha1.NewLoadTest(loadTestName, configMapName, env, count)
+		kustomization := artillery.NewKustomization(artillery.LoadTestFilename, configMapName, testScriptPath, artillery.LabelPrefix)
 
-		meta := metav1.TypeMeta{
-			Kind:       kind,
-			APIVersion: apiVersion,
-		}
-		objectMeta := metav1.ObjectMeta{
-			Name: loadTestName,
-		}
-		testScript := v1alpha1.TestScript{
-			Config: v1alpha1.Config{
-				ConfigMap: configMapName,
+		msg, err := artillery.Generatables{
+			{
+				Path:      path.Join(targetDir, artillery.LoadTestFilename),
+				Marshaler: loadTest,
 			},
-		}
-		spec := v1alpha1.LoadTestSpec{
-			Count:       count,
-			Environment: "CHANGE_ME",
-			TestScript:  testScript,
-		}
-
-		loadTest := &v1alpha1.LoadTest{
-			TypeMeta:   meta,
-			ObjectMeta: objectMeta,
-			Spec:       spec,
-		}
-
-		out, err := getOrCreateManifestsPath(workingDir, outPath)
+			{
+				Path:      path.Join(targetDir, "kustomization.yaml"),
+				Marshaler: kustomization,
+			},
+		}.Write(2)
 		if err != nil {
 			return err
-		}
-
-		manifestPath := path.Join(out, "loadtest-cr.yaml")
-		mWritten, err := writeTo(manifestPath, loadTest, 2)
-		if err != nil {
-			return err
-		}
-
-		kustomization := artillery.NewKustomization(configMapName, testScriptPath, "loadtest")
-		kustomizationPath := path.Join(out, "kustomization.yaml")
-		kWritten, err := writeTo(kustomizationPath, kustomization, 2)
-		if err != nil {
-			return err
-		}
-
-		if mWritten > 0 {
-			msg = fmt.Sprintf("%s\n  >> loadtest manifests created at: [%s]", msg, out)
-		}
-		if kWritten > 0 {
-			msg = fmt.Sprintf("%s\n  >> loadtest kustomization created at: [%s]", msg, out)
 		}
 
 		_, _ = io.Out.Write([]byte(msg))
@@ -161,7 +139,7 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 	}
 }
 
-func getOrCreateManifestsPath(workingDir string, outPath string) (string, error) {
+func getOrCreateTargetDir(workingDir string, outPath string) (string, error) {
 	result := outPath
 
 	if len(result) == 0 {
@@ -178,33 +156,16 @@ func validate(args []string) error {
 	if len(args) > 1 {
 		return errors.New("unknown arguments detected")
 	}
+
+	loadTestName := args[0]
+	invalids := k8sValidation.NameIsDNSSubdomain(loadTestName, false)
+	if len(invalids) > 0 {
+		return fmt.Errorf("load test name %s must be a valid DNS subdomain name, \n%s", loadTestName, strings.Join(invalids, "\n- "))
+	}
+
 	return nil
 }
 
 func formatCmdExample(doc, cliName string) string {
 	return fmt.Sprintf(doc, cliName)
-}
-
-func writeTo(filePath string, v artillery.FileMarshaler, indent int) (n int64, err error) {
-	data, err := v.MarshalWithIndent(indent)
-	if err != nil {
-		return int64(0), err
-	}
-
-	absPath, err := filepath.Abs(filePath)
-	if err != nil {
-		return int64(0), err
-	}
-
-	file, err := os.Create(absPath)
-	if err != nil {
-		return int64(0), err
-	}
-
-	written, err := file.Write(data)
-	if err != nil {
-		return int64(0), err
-	}
-
-	return int64(written), file.Close()
 }
