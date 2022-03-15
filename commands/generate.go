@@ -15,8 +15,8 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/artilleryio/artillery-operator/api/v1alpha1"
@@ -93,6 +93,10 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 			return err
 		}
 
+		if err := validateScript(testScriptPath); err != nil {
+			return err
+		}
+
 		env, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -111,7 +115,7 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 		loadTestName := args[0]
 		configMapName := fmt.Sprintf("%s-test-script", loadTestName)
 
-		targetDir, err := getOrCreateTargetDir(workingDir, outPath)
+		targetDir, err := artillery.GetOrCreateTargetDir(workingDir, outPath)
 		if err != nil {
 			return err
 		}
@@ -139,16 +143,6 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 	}
 }
 
-func getOrCreateTargetDir(workingDir string, outPath string) (string, error) {
-	result := outPath
-
-	if len(result) == 0 {
-		result = path.Join(workingDir, "artillery-manifests")
-	}
-
-	return result, os.MkdirAll(result, 0700)
-}
-
 func validate(args []string) error {
 	if len(args) == 0 {
 		return errors.New("missing load test name")
@@ -161,6 +155,19 @@ func validate(args []string) error {
 	invalids := k8sValidation.NameIsDNSSubdomain(loadTestName, false)
 	if len(invalids) > 0 {
 		return fmt.Errorf("load test name %s must be a valid DNS subdomain name, \n%s", loadTestName, strings.Join(invalids, "\n- "))
+	}
+
+	return nil
+}
+
+func validateScript(s string) error {
+	absPath, err := filepath.Abs(s)
+	if err != nil {
+		return err
+	}
+
+	if !artillery.DirOrFileExists(absPath) {
+		return fmt.Errorf("cannot find script file %s ", s)
 	}
 
 	return nil
