@@ -13,11 +13,13 @@
 package artillery
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
+	"log"
 	"path"
 	"path/filepath"
 
+	yaml3 "gopkg.in/yaml.v3"
 	"sigs.k8s.io/kustomize/api/types"
 )
 
@@ -25,23 +27,23 @@ type Kustomization struct {
 	*types.Kustomization
 }
 
-func NewKustomization(configMapName string, testScriptPath string, labelPrefix string) *Kustomization {
-	if !filepath.IsAbs(testScriptPath) {
-		testScriptPath = path.Join("..", testScriptPath)
+func NewKustomization(loadtest, configMap, testScript, labelPrefix string) *Kustomization {
+	if !filepath.IsAbs(testScript) {
+		testScript = path.Join("..", testScript)
 	}
 
 	k := &Kustomization{
 		Kustomization: &types.Kustomization{
 			TypeMeta: types.TypeMeta{
-				Kind:       "Kustomization",
-				APIVersion: "kustomize.config.k8s.io/v1beta1",
+				Kind:       types.KustomizationKind,
+				APIVersion: types.KustomizationVersion,
 			},
 			ConfigMapGenerator: []types.ConfigMapArgs{
 				{
 					GeneratorArgs: types.GeneratorArgs{
-						Name: configMapName,
+						Name: configMap,
 						KvPairSources: types.KvPairSources{
-							FileSources: []string{testScriptPath},
+							FileSources: []string{testScript},
 						},
 					},
 				},
@@ -53,6 +55,7 @@ func NewKustomization(configMapName string, testScriptPath string, labelPrefix s
 					"artillery.io/part-of":   labelPrefix,
 				},
 			},
+			Resources: []string{loadtest},
 		},
 	}
 
@@ -60,16 +63,18 @@ func NewKustomization(configMapName string, testScriptPath string, labelPrefix s
 }
 
 func (k *Kustomization) MarshalWithIndent(indent int) ([]byte, error) {
-	j, err := json.Marshal(k)
-	if err != nil {
+	var out bytes.Buffer
+	encoder := yaml3.NewEncoder(&out)
+	defer func(encoder *yaml3.Encoder) {
+		err := encoder.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(encoder)
+	encoder.SetIndent(indent)
+
+	if err := encoder.Encode(k.Kustomization); err != nil {
 		return nil, err
 	}
-
-	y, err := JsonToYaml(j, indent)
-	if err != nil {
-
-		return nil, err
-	}
-
-	return y, nil
+	return out.Bytes(), nil
 }
