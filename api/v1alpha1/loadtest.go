@@ -74,6 +74,7 @@ func (lt *LoadTest) json() ([]byte, error) {
 		return nil, err
 	}
 	delete(temp, "status")
+	delete(temp["metadata"].(map[string]interface{}), "creationTimestamp")
 
 	return json.Marshal(temp)
 }
