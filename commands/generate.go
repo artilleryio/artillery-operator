@@ -28,12 +28,7 @@ import (
 
 const generateExample = `- $ %[1]s generate <load-test-name> --script path/to/test-script
 - $ %[1]s generate <load-test-name> -s path/to/test-script
-- $ %[1]s generate <load-test-name> -s path/to/test-script [--env ]
-- $ %[1]s generate <load-test-name> -s path/to/test-script [-e ]
-- $ %[1]s generate <load-test-name> -s path/to/test-script [--out ]
-- $ %[1]s generate <load-test-name> -s path/to/test-script [-o ]
-- $ %[1]s generate <load-test-name> -s path/to/test-script [--out ] [--count ]
-- $ %[1]s generate <load-test-name> -s path/to/test-script [--out ] [-c ]`
+- $ %[1]s generate <load-test-name> -s path/to/test-script [--env ] [--out ] [--count ]`
 
 func newCmdGenerate(workingDir string, io genericclioptions.IOStreams, cliName string) *cobra.Command {
 	cmd := &cobra.Command{
