@@ -165,9 +165,6 @@ spec:
                   Succeeded.
                 format: int32
                 type: integer
-            required:
-            - completions
-            - image
             type: object
         type: object
     served: true

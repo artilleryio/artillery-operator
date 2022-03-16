@@ -6,3 +6,6 @@ testbin/
 
 # Ignore hack data directory.
 hack/
+
+# Ignore generated manifests.
+artillery-manifests/
