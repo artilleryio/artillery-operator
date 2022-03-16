@@ -25,7 +25,7 @@ type Generatable struct {
 
 type Generatables []Generatable
 
-func (g Generatable) writeTo(indent int) (n int64, err error) {
+func (g Generatable) generate(indent int) (n int64, err error) {
 	data, err := g.Marshaler.MarshalWithIndent(indent)
 	if err != nil {
 		return int64(0), err
@@ -49,10 +49,10 @@ func (g Generatable) writeTo(indent int) (n int64, err error) {
 	return int64(written), file.Close()
 }
 
-func (gs Generatables) Write(indent int) (string, error) {
+func (gs Generatables) Generate(indent int) (string, error) {
 	var msg string
 	for i, g := range gs {
-		mWritten, err := g.writeTo(indent)
+		mWritten, err := g.generate(indent)
 		if err != nil {
 			return "", err
 		}

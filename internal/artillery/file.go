@@ -14,7 +14,7 @@ package artillery
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 )
 
 func DirOrFileExists(path string) bool {
@@ -28,7 +28,7 @@ func GetOrCreateTargetDir(workingDir string, outPath string) (string, error) {
 	result := outPath
 
 	if len(result) == 0 {
-		result = path.Join(workingDir, "artillery-manifests")
+		result = filepath.Join(workingDir, "artillery-manifests")
 	}
 
 	return result, os.MkdirAll(result, 0700)

@@ -16,7 +16,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"path"
 	"path/filepath"
 
 	yaml3 "gopkg.in/yaml.v3"
@@ -29,7 +28,7 @@ type Kustomization struct {
 
 func NewKustomization(loadtest, configMap, testScript, labelPrefix string) *Kustomization {
 	if !filepath.IsAbs(testScript) {
-		testScript = path.Join("..", testScript)
+		testScript = filepath.Join("..", testScript)
 	}
 
 	k := &Kustomization{

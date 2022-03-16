@@ -15,7 +15,6 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -120,14 +119,14 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 
 		msg, err := artillery.Generatables{
 			{
-				Path:      path.Join(targetDir, artillery.LoadTestFilename),
+				Path:      filepath.Join(targetDir, artillery.LoadTestFilename),
 				Marshaler: loadTest,
 			},
 			{
-				Path:      path.Join(targetDir, "kustomization.yaml"),
+				Path:      filepath.Join(targetDir, "kustomization.yaml"),
 				Marshaler: kustomization,
 			},
-		}.Write(2)
+		}.Generate(2)
 		if err != nil {
 			return err
 		}
