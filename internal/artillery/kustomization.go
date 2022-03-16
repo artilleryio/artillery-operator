@@ -27,9 +27,7 @@ type Kustomization struct {
 }
 
 func NewKustomization(loadtest, configMap, testScript, labelPrefix string) *Kustomization {
-	if !filepath.IsAbs(testScript) {
-		testScript = filepath.Join("..", testScript)
-	}
+	testScript = filepath.Base(testScript)
 
 	k := &Kustomization{
 		Kustomization: &types.Kustomization{

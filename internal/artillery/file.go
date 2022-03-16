@@ -13,6 +13,7 @@
 package artillery
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -32,4 +33,18 @@ func GetOrCreateTargetDir(workingDir string, outPath string) (string, error) {
 	}
 
 	return result, os.MkdirAll(result, 0700)
+}
+
+func CopyFileTo(dir string, srcPath string) error {
+	input, err := ioutil.ReadFile(srcPath)
+	if err != nil {
+		return err
+	}
+
+	dest := filepath.Join(dir, filepath.Base(srcPath))
+	err = ioutil.WriteFile(dest, input, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }

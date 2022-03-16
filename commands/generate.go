@@ -114,6 +114,10 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 			return err
 		}
 
+		if err := artillery.CopyFileTo(targetDir, testScriptPath); err != nil {
+			return err
+		}
+
 		loadTest := v1alpha1.NewLoadTest(loadTestName, configMapName, env, count)
 		kustomization := artillery.NewKustomization(artillery.LoadTestFilename, configMapName, testScriptPath, artillery.LabelPrefix)
 
