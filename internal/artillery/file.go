@@ -25,11 +25,14 @@ func DirOrFileExists(path string) bool {
 	return false
 }
 
-func GetOrCreateTargetDir(workingDir string, outPath string) (string, error) {
-	result := outPath
+func MkdirAllTargetOrDefault(workingDir, targetDir, defaultDir string) (string, error) {
+	result := filepath.Join(workingDir, defaultDir)
+	if len(targetDir) > 0 {
+		result = targetDir
+	}
 
 	if len(result) == 0 {
-		result = filepath.Join(workingDir, "artillery-manifests")
+		return result, nil
 	}
 
 	return result, os.MkdirAll(result, 0700)

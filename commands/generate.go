@@ -109,7 +109,7 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 		loadTestName := args[0]
 		configMapName := fmt.Sprintf("%s-test-script", loadTestName)
 
-		targetDir, err := artillery.GetOrCreateTargetDir(workingDir, outPath)
+		targetDir, err := artillery.MkdirAllTargetOrDefault(workingDir, outPath, artillery.DefaultManifestDir)
 		if err != nil {
 			return err
 		}

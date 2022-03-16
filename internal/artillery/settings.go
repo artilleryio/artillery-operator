@@ -14,3 +14,4 @@ package artillery
 
 const LoadTestFilename = "loadtest-cr.yaml"
 const LabelPrefix = "loadtest"
+const DefaultManifestDir = "artillery-manifests"
