@@ -14,7 +14,9 @@ package commands
 
 import (
 	"fmt"
+	"io"
 
+	"github.com/artilleryio/artillery-operator/internal/artillery"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -27,6 +29,9 @@ func NewCmdArtillery(workingDir string, io genericclioptions.IOStreams) *cobra.C
 		Short:        "Use artillery.io operator helpers",
 		Use:          "artillery",
 		SilenceUsage: true,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return highlightTelemetryIfRequired(io.Out)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				return fmt.Errorf("%q is not a %[1]s command\nSee '%[1]s --help'", args[0], cliName)
@@ -39,4 +44,19 @@ func NewCmdArtillery(workingDir string, io genericclioptions.IOStreams) *cobra.C
 	cmd.AddCommand(newCmdGenerate(workingDir, io, cliName))
 
 	return cmd
+}
+
+func highlightTelemetryIfRequired(out io.Writer) error {
+	settings, err := artillery.GetOrCreateCLISettings()
+	if err != nil {
+		return err
+	}
+
+	if !settings.GetFirstRun() {
+		return nil
+	}
+
+	_, _ = out.Write([]byte("The kubectl artillery plugin uses telemetry\n"))
+
+	return settings.SetFirstRun(false).Save()
 }
