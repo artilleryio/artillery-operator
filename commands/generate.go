@@ -20,6 +20,8 @@ import (
 
 	"github.com/artilleryio/artillery-operator/api/v1alpha1"
 	"github.com/artilleryio/artillery-operator/internal/artillery"
+	"github.com/artilleryio/artillery-operator/internal/telemetry"
+	"github.com/posthog/posthog-go"
 	"github.com/spf13/cobra"
 	k8sValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -29,13 +31,29 @@ const generateExample = `- $ %[1]s generate <load-test-name> --script path/to/te
 - $ %[1]s generate <load-test-name> -s path/to/test-script
 - $ %[1]s generate <load-test-name> -s path/to/test-script [--env ] [--out ] [--count ]`
 
-func newCmdGenerate(workingDir string, io genericclioptions.IOStreams, cliName string) *cobra.Command {
+func newCmdGenerate(
+	workingDir string,
+	io genericclioptions.IOStreams,
+	cliName string,
+	tClient posthog.Client,
+	tCfg telemetry.Config,
+) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "generate [OPTIONS]",
 		Aliases: []string{"gen"},
 		Short:   "Generates load test manifests and wires dependencies in a kustomization.yaml file",
 		Example: formatCmdExample(generateExample, cliName),
 		RunE:    makeRunGenerate(workingDir, io),
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			testScriptPath, _ := cmd.Flags().GetString("script")
+			env, _ := cmd.Flags().GetString("env")
+			outPath, _ := cmd.Flags().GetString("out")
+			count, _ := cmd.Flags().GetInt("count")
+
+			logger := artillery.NewIOLogger(io.Out, io.ErrOut)
+			telemetry.TelemeterGenerateManifests(args[0], testScriptPath, env, outPath, count, tClient, tCfg, logger)
+			return nil
+		},
 	}
 
 	flags := cmd.Flags()

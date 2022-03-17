@@ -10,7 +10,7 @@
  *   http://mozilla.org/MPL/2.0/
  */
 
-package controllers
+package telemetry
 
 import (
 	"crypto/sha1"
@@ -27,13 +27,15 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-type telemetryEvent struct {
+const PostHogToken = "_uzX-_WJoVmE_tsLvu0OFD2tpd0HGz72D5sU1zM2hbs"
+
+type event struct {
 	Name       string
 	Properties map[string]interface{}
 }
 
-func protectedDistinctId() (string, error) {
-	return machineid.ProtectedID(AppName)
+func protectedDistinctId(cfg Config) (string, error) {
+	return machineid.ProtectedID(cfg.AppName)
 }
 
 func hashEncode(v string) string {
@@ -65,21 +67,21 @@ func (n *noopClient) IsFeatureEnabled(_ string, _ string, _ bool) (bool, error) 
 func (n *noopClient) ReloadFeatureFlags() error                                 { return nil }
 func (n *noopClient) GetFeatureFlags() ([]posthog.FeatureFlag, error)           { return nil, nil }
 
-func NewTelemetryClient(tCfg TelemetryConfig) (posthog.Client, error) {
+func NewClient(tCfg Config) (posthog.Client, error) {
 	if tCfg.Disable {
 		return &noopClient{}, nil
 	}
-	return posthog.NewWithConfig(PosthogToken, posthog.Config{})
+	return posthog.NewWithConfig(PostHogToken, posthog.Config{})
 }
 
-func telemetryEnqueue(client posthog.Client, config TelemetryConfig, event telemetryEvent, logger logr.Logger) error {
-	properties := buildProperties(event.Properties)
+func enqueue(client posthog.Client, config Config, event event, logger logr.Logger) error {
+	properties := buildProperties(event.Properties, config)
 	if config.Debug {
-		debugTelemetryProperties(properties, logger)
+		debugProperties(properties, logger)
 		return nil
 	}
 
-	distinctId, err := protectedDistinctId()
+	distinctId, err := protectedDistinctId(config)
 	if err != nil {
 		return err
 	}
@@ -95,23 +97,23 @@ func telemetryEnqueue(client posthog.Client, config TelemetryConfig, event telem
 	return nil
 }
 
-func debugTelemetryProperties(props map[string]interface{}, logger logr.Logger) {
+func debugProperties(props map[string]interface{}, logger logr.Logger) {
 	for k, v := range props {
 		logger.Info("ARTILLERY_TELEMETRY_DEBUG=true", k, v)
 	}
 }
 
-func buildProperties(extra map[string]interface{}) map[string]interface{} {
+func buildProperties(extra map[string]interface{}, cfg Config) map[string]interface{} {
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = ""
 	}
 
 	properties := map[string]interface{}{
-		"source":       AppName,
-		"version":      Version,
+		"source":       cfg.AppName,
+		"version":      cfg.Version,
 		"containerOS":  strings.ToLower(runtime.GOOS),
-		"workerImage":  WorkerImage,
+		"workerImage":  cfg.WorkerImage,
 		"ipHash":       hashEncode(getIPAddress()),
 		"hostnameHash": hashEncode(hostname),
 		"$ip":          nil,
@@ -124,26 +126,33 @@ func buildProperties(extra map[string]interface{}) map[string]interface{} {
 	return properties
 }
 
-type TelemetryConfig struct {
-	Disable bool
-	Debug   bool
+type Config struct {
+	Disable     bool
+	Debug       bool
+	AppName     string
+	Version     string
+	WorkerImage string
 }
 
-func NewTelemetryConfig(logger logr.Logger) TelemetryConfig {
-	result := TelemetryConfig{}
+func NewConfig(appName, version, workerImage string, logger logr.Logger) Config {
+	result := Config{
+		AppName:     appName,
+		Version:     version,
+		WorkerImage: workerImage,
+	}
 
-	if getTelemetryDisableConfig(logger) {
+	if getDisableConfig(logger) {
 		result.Disable = true
 	}
 
-	if getTelemetryDebugConfig(logger) {
+	if getDebugConfig(logger) {
 		result.Debug = true
 	}
 
 	return result
 }
 
-func (t TelemetryConfig) toEnvVar() []core.EnvVar {
+func (t Config) ToEnvVar() []core.EnvVar {
 	return []core.EnvVar{
 		{
 			Name:  "ARTILLERY_DISABLE_TELEMETRY",
@@ -156,32 +165,40 @@ func (t TelemetryConfig) toEnvVar() []core.EnvVar {
 	}
 }
 
-func getTelemetryDisableConfig(logger logr.Logger) bool {
+func getDisableConfig(logger logr.Logger) bool {
 	disable, ok := os.LookupEnv("ARTILLERY_DISABLE_TELEMETRY")
 	if !ok {
-		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set!")
+		if logger != nil {
+			logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set!")
+		}
 		return false
 	}
 
 	parsedDisable, err := strconv.ParseBool(disable)
 	if err != nil {
-		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set with boolean type value. TELEMETRY REMAINS ENABLED")
+		if logger != nil {
+			logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set with boolean type value. TELEMETRY REMAINS ENABLED")
+		}
 		return false
 	}
 
 	return parsedDisable
 }
 
-func getTelemetryDebugConfig(logger logr.Logger) bool {
+func getDebugConfig(logger logr.Logger) bool {
 	debug, ok := os.LookupEnv("ARTILLERY_TELEMETRY_DEBUG")
 	if !ok {
-		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set!")
+		if logger != nil {
+			logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set!")
+		}
 		return false
 	}
 
 	parsedDebug, err := strconv.ParseBool(debug)
 	if err != nil {
-		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set with boolean type value. TELEMETRY DEBUG REMAINS DISABLED")
+		if logger != nil {
+			logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set with boolean type value. TELEMETRY DEBUG REMAINS DISABLED")
+		}
 		return false
 	}
 

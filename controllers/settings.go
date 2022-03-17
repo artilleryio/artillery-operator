@@ -15,11 +15,9 @@ package controllers
 const (
 	AppName = "artillery-operator"
 
-	Version = "version"
+	Version = "alpha"
 
 	WorkerImage = "ghcr.io/artilleryio/artillery-metrics-enabled:v2.0.0"
 
 	TestScriptVol = "test-script"
-
-	PosthogToken = "_uzX-_WJoVmE_tsLvu0OFD2tpd0HGz72D5sU1zM2hbs"
 )
