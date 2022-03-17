@@ -86,6 +86,7 @@ func TelemeterGenerateManifests(
 		event{
 			Name: "operator kubectl-artillery generate",
 			Properties: map[string]interface{}{
+				"source":           "artillery-operator-kubectl-plugin",
 				"name":             hashEncode(name),
 				"testScript":       hashEncode(testScriptPath),
 				"count":            count,
