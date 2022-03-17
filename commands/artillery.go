@@ -63,7 +63,7 @@ func highlightTelemetryIfRequired(out io.Writer) error {
 		return nil
 	}
 
-	_, _ = out.Write([]byte("The kubectl artillery plugin uses telemetry\n"))
+	_, _ = out.Write([]byte("Telemetry is on. Learn more: https://artillery.io/docs/resources/core/telemetry.html\n"))
 
 	return settings.SetFirstRun(false).Save()
 }
