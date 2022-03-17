@@ -10,18 +10,19 @@
  *   http://mozilla.org/MPL/2.0/
  */
 
-package controllers
+package telemetry
 
 import (
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
+	"github.com/posthog/posthog-go"
 )
 
-func telemeterActive(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logger) {
-	if err := telemetryEnqueue(
-		r.TelemetryClient,
-		r.TelemetryConfig,
-		telemetryEvent{
+func TelemeterActive(v *lt.LoadTest, tClient posthog.Client, tConfig Config, logger logr.Logger) {
+	if err := enqueue(
+		tClient,
+		tConfig,
+		event{
 			Name: "operator test started",
 			Properties: map[string]interface{}{
 				"name":        hashEncode(v.Name),
@@ -35,20 +36,20 @@ func telemeterActive(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logger) 
 		logger.Error(err,
 			"could not broadcast telemetry",
 			"telemetry disable",
-			r.TelemetryConfig.Disable,
+			tConfig.Disable,
 			"telemetry debug",
-			r.TelemetryConfig.Debug,
+			tConfig.Debug,
 			"event",
 			"operator load test created",
 		)
 	}
 }
 
-func telemeterCompletion(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logger) {
-	err := telemetryEnqueue(
-		r.TelemetryClient,
-		r.TelemetryConfig,
-		telemetryEvent{
+func TelemeterCompletion(v *lt.LoadTest, tClient posthog.Client, tConfig Config, logger logr.Logger) {
+	err := enqueue(
+		tClient,
+		tConfig,
+		event{
 			Name: "operator test completed",
 			Properties: map[string]interface{}{
 				"name":        hashEncode(v.Name),
@@ -63,9 +64,9 @@ func telemeterCompletion(v *lt.LoadTest, r *LoadTestReconciler, logger logr.Logg
 		logger.Error(err,
 			"could not broadcast telemetry",
 			"telemetry disable",
-			r.TelemetryConfig.Disable,
+			tConfig.Disable,
 			"telemetry debug",
-			r.TelemetryConfig.Debug,
+			tConfig.Debug,
 			"event",
 			"operator load test completed",
 		)

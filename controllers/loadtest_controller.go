@@ -17,6 +17,7 @@ import (
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/artilleryio/artillery-operator/internal/telemetry"
 	"github.com/posthog/posthog-go"
 	v1 "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
@@ -33,7 +34,7 @@ type LoadTestReconciler struct {
 	client.Client
 	Scheme          *runtime.Scheme
 	Recorder        record.EventRecorder
-	TelemetryConfig TelemetryConfig
+	TelemetryConfig telemetry.Config
 	TelemetryClient posthog.Client
 }
 

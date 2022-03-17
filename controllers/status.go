@@ -18,6 +18,7 @@ import (
 	"time"
 
 	lt "github.com/artilleryio/artillery-operator/api/v1alpha1"
+	"github.com/artilleryio/artillery-operator/internal/telemetry"
 	"github.com/go-logr/logr"
 	"github.com/thoas/go-funk"
 	v1 "k8s.io/api/batch/v1"
@@ -202,7 +203,7 @@ func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTe
 		for _, pod := range podList.Items {
 			r.Recorder.Eventf(v, "Normal", "Running", "Running Load Test worker pod: %s", pod.Name)
 		}
-		telemeterActive(v, r, logger)
+		telemetry.TelemeterActive(v, r.TelemetryClient, r.TelemetryConfig, logger)
 
 	case o == LoadTestCompleted && v.Status.CompletionTime == nil:
 		msg := "Load Test completed"
@@ -213,7 +214,7 @@ func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTe
 			r.Recorder.Event(v, "Normal", "Completed", msg)
 		}
 
-		telemeterCompletion(v, r, logger)
+		telemetry.TelemeterCompletion(v, r.TelemetryClient, r.TelemetryConfig, logger)
 	}
 
 	return nil

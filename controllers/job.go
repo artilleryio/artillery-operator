@@ -118,7 +118,7 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 										},
 									},
 								},
-								r.TelemetryConfig.toEnvVar()...,
+								r.TelemetryConfig.ToEnvVar()...,
 							),
 						},
 					},
