@@ -17,13 +17,20 @@ import (
 	"io"
 
 	"github.com/artilleryio/artillery-operator/internal/artillery"
+	"github.com/artilleryio/artillery-operator/internal/telemetry"
+	"github.com/posthog/posthog-go"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 const cliName = "kubectl artillery"
 
-func NewCmdArtillery(workingDir string, io genericclioptions.IOStreams) *cobra.Command {
+func NewCmdArtillery(
+	workingDir string,
+	io genericclioptions.IOStreams,
+	tClient posthog.Client,
+	tCfg telemetry.Config,
+) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Short:        "Use artillery.io operator helpers",
@@ -41,7 +48,7 @@ func NewCmdArtillery(workingDir string, io genericclioptions.IOStreams) *cobra.C
 		},
 	}
 
-	cmd.AddCommand(newCmdGenerate(workingDir, io, cliName))
+	cmd.AddCommand(newCmdGenerate(workingDir, io, cliName, tClient, tCfg))
 
 	return cmd
 }

@@ -168,13 +168,17 @@ func (t Config) ToEnvVar() []core.EnvVar {
 func getDisableConfig(logger logr.Logger) bool {
 	disable, ok := os.LookupEnv("ARTILLERY_DISABLE_TELEMETRY")
 	if !ok {
-		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set!")
+		if logger != nil {
+			logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set!")
+		}
 		return false
 	}
 
 	parsedDisable, err := strconv.ParseBool(disable)
 	if err != nil {
-		logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set with boolean type value. TELEMETRY REMAINS ENABLED")
+		if logger != nil {
+			logger.Info("ARTILLERY_DISABLE_TELEMETRY was not set with boolean type value. TELEMETRY REMAINS ENABLED")
+		}
 		return false
 	}
 
@@ -184,13 +188,17 @@ func getDisableConfig(logger logr.Logger) bool {
 func getDebugConfig(logger logr.Logger) bool {
 	debug, ok := os.LookupEnv("ARTILLERY_TELEMETRY_DEBUG")
 	if !ok {
-		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set!")
+		if logger != nil {
+			logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set!")
+		}
 		return false
 	}
 
 	parsedDebug, err := strconv.ParseBool(debug)
 	if err != nil {
-		logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set with boolean type value. TELEMETRY DEBUG REMAINS DISABLED")
+		if logger != nil {
+			logger.Info("ARTILLERY_TELEMETRY_DEBUG was not set with boolean type value. TELEMETRY DEBUG REMAINS DISABLED")
+		}
 		return false
 	}
 

@@ -72,3 +72,34 @@ func TelemeterCompletion(v *lt.LoadTest, tClient posthog.Client, tConfig Config,
 		)
 	}
 }
+
+func TelemeterGenerateManifests(
+	name, testScriptPath, env, outPath string,
+	count int,
+	tClient posthog.Client,
+	tConfig Config,
+	logger logr.Logger,
+) {
+	if err := enqueue(
+		tClient,
+		tConfig,
+		event{
+			Name: "operator kubectl-artillery generate",
+			Properties: map[string]interface{}{
+				"name":             hashEncode(name),
+				"testScript":       hashEncode(testScriptPath),
+				"count":            count,
+				"environment":      hashEncode(env),
+				"defaultOutputDir": len(outPath) == 0,
+			},
+		},
+		logger,
+	); err != nil {
+		logger.Error(err,
+			"could not broadcast telemetry",
+			"telemetry disable", tConfig.Disable,
+			"telemetry debug", tConfig.Debug,
+			"event", "operator kubectl-artillery generate",
+		)
+	}
+}
