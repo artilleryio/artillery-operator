@@ -179,6 +179,18 @@ rm -rf $$TMP_DIR ;\
 }
 endef
 
+define go-get-install
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef
+
 .PHONY: bundle
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
@@ -234,3 +246,36 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+# Create a draft release distribution of the kubectl-artillery plugin.
+# The draft release is created using goreleaser - downloaded locally if necessary.
+# It creates a draft release page on Github and requires an access token stored in a .goreleaser-github-token file.
+#
+# Regarding the Github draft release page:
+# ** ENSURE the draft release CHANGELOG only contains kubectl plugin features.
+# ** ENSURE the repo is NOT in a dirty state before running the task.
+.PHONY: goreleaser kubeplugin-release, check-release-tag-version, check-release-tag-msg
+
+GORELEASER = $(shell pwd)/bin/goreleaser
+goreleaser: ## Download goreleaser locally if necessary.
+	$(call go-get-install,$(GORELEASER),github.com/goreleaser/goreleaser@latest)
+
+check-release-tag-version:
+ifndef KUBEPLUGIN_TAG_VERSION
+	$(error KUBEPLUGIN_TAG_VERSION a tag version is required to tag the kubectl-artillery release)
+endif
+
+check-release-tag-msg:
+ifndef KUBEPLUGIN_TAG_MSG
+	$(error KUBEPLUGIN_TAG_MSG a message is required to tag the kubectl-artillery release)
+endif
+
+## creates a draft release of the artillery kubectl plugin on Github see .goreleaser.yaml
+kubeplugin-release: check-release-tag-version check-release-tag-msg goreleaser
+	git tag -a "v$(KUBEPLUGIN_TAG_VERSION)" -m "$(KUBEPLUGIN_TAG_MSG)"
+	git push --tags
+	$(GORELEASER) release --config .goreleaser.yaml --rm-dist
+
+clean-release-tags: check-release-tag-version
+	git tag -d "v$(KUBEPLUGIN_TAG_VERSION)"
+	git push origin ":refs/tags/v$(KUBEPLUGIN_TAG_VERSION)"
