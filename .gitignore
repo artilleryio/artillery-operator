@@ -34,3 +34,7 @@ artillery-manifests/
 *.swp
 *.swo
 *~
+
+# Distribution
+dist/
+*.goreleaser-github-token
