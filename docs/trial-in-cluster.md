@@ -2,7 +2,7 @@
 
 <img width="1012" alt="Kubernetes native load testing" src="../assets/artillery-operator-header.png">
 
-# Deploy in your own cluster
+# Deploy the Operator in your own cluster
 
 This deploys the alpha operator image:
 [artillery-operator-alpha](https://github.com/orgs/artilleryio/packages/container/package/artillery-operator-alpha).
