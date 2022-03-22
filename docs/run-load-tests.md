@@ -4,6 +4,9 @@
 
 # Running Load Tests
 
+- [Example: LoadTest with local test reports](#example-loadtest-with-local-test-reports)
+- [Example: LoadTest with test reports published to Prometheus](#example-loadtest-with-test-reports-published-to-prometheus)
+
 ## Pre-requisites
 
 A cluster (remote or local) with artillery-operator [already deployed](#trial-in-your-own-cluster).
