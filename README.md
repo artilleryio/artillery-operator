@@ -33,3 +33,8 @@ __Developers__, create and apply [CRs manifests](#loadtest-manifest) to run dist
 
 - [Developing locally using KinD](docs/develop-local-cluster.md)
 - [Developing using a remote AWS EKS cluster](docs/develop-remote-cluster.md)
+
+## License
+
+The Artillery Operator is open-source software distributed under the terms of
+the [MPLv2](https://www.mozilla.org/en-US/MPL/2.0/) license.
