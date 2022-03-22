@@ -13,7 +13,7 @@ An operator to create and run distributed Artillery load tests from a Kubernetes
 - Load tests run existing
   [Artillery test scripts](https://www.artillery.io/docs/guides/guides/test-script-reference).
 
-You can interact with created and running load tests via kubectl. And, monitor them with K8s UI tools too.
+You can interact with created and running load tests via `kubectl`. And, monitor them with K8s UI tools too.
 
 __SREs__, use the Operator to set up a self-service load testing framework on any K8s cluster.
 
@@ -31,8 +31,8 @@ __Developers__, create and apply [CRs manifests](#loadtest-manifest) to run dist
 
 ## Kubectl Artillery plugin
 
-The `kubectl artillery` plugin minimises the faff. Quickly create and configure LoadTest CR manifests, and their
-required dependencies. All wrapped in a [Kustomize](https://kubectl.docs.kubernetes.io) bundle ready for deployment.
+The `kubectl artillery` plugin minimises faff. Quickly create configured LoadTest CR manifests, and their required
+dependencies. All wrapped in a [Kustomize](https://kubectl.docs.kubernetes.io) bundle ready for deployment.
 
 - [Plugin installation and usage](docs/kubectl-artillery-plugin.md)
 
