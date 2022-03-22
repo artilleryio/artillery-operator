@@ -29,12 +29,15 @@ __Developers__, create and apply [CRs manifests](#loadtest-manifest) to run dist
 - [Run Load Tests](docs/run-load-tests.md)
 - [Known issues](docs/known-issues.md)
 
-## Kubectl Artillery plugin
+## Kubectl helper plugin
 
-The `kubectl artillery` plugin minimises faff. Quickly create configured LoadTest CR manifests, and their required
-dependencies. All wrapped in a [Kustomize](https://kubectl.docs.kubernetes.io) bundle ready for deployment.
+Minimise faff with our kubectl plugin, `kubectl artillery`.
 
-- [Plugin installation and usage](docs/kubectl-artillery-plugin.md)
+- Quickly create configured LoadTest CR manifests.
+- Automatically create their required dependencies.
+- Deploy all manifests using a generated [Kustomize](https://kubectl.docs.kubernetes.io) bundle.
+
+For more details, see [helper plugin installation and usage](docs/kubectl-artillery-plugin.md).
 
 ## Developing the Operator
 
