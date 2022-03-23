@@ -15,7 +15,7 @@ your `$PATH`.
 #### Linux
 
 ```shell
-curl -L -o kubectl-artillery.tar.gz https://github.com/artilleryio/artillery-operator/kubectl-artillery/releases/download/v0.1.0/kubectl-artillery_v0.1.0_linux_amd64.tar.gz
+curl -L -o kubectl-artillery.tar.gz https://github.com/artilleryio/artillery-operator/releases/download/v0.1.0/kubectl-artillery_0.1.0_linux_amd64_2022-03-23T15.07.18Z.tar.gz
 tar -xvf kubectl-artillery.tar.gz
 sudo mv kubectl-artillery /usr/local/bin
 ```
@@ -23,7 +23,7 @@ sudo mv kubectl-artillery /usr/local/bin
 #### Darwin(amd64)
 
 ```shell
-curl -L -o kubectl-artillery.tar.gz https://github.com/artilleryio/artillery-operator/kubectl-artillery/releases/download/v0.1.0/kubectl-artillery_v0.1.0_darwin_amd64.tar.gz
+curl -L -o kubectl-artillery.tar.gz https://github.com/artilleryio/artillery-operator/releases/download/v0.1.0/kubectl-artillery_v0.1.0_darwin_amd64_2022-03-23T15.07.18Z.tar.gz
 tar -xvf kubectl-artillery.tar.gz
 sudo mv kubectl-artillery /usr/local/bin
 ```
@@ -31,7 +31,7 @@ sudo mv kubectl-artillery /usr/local/bin
 #### Darwin(arm64)
 
 ```shell
-curl -L -o kubectl-artillery.tar.gz https://github.com/artilleryio/artillery-operator/kubectl-artillery/releases/download/v0.1.0/kubectl-artillery_v0.1.0_darwin_arm64.tar.gz
+curl -L -o kubectl-artillery.tar.gz https://github.com/artilleryio/artillery-operator/releases/download/v0.1.0/kubectl-artillery_v0.1.0_darwin_arm64_2022-03-23T15.07.18Z.tar.gz
 tar -xvf kubectl-artillery.tar.gz
 sudo mv kubectl-artillery /usr/local/bin
 ```
