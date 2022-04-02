@@ -25,11 +25,11 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const scriptsExample = `- $ %[1]s generate scripts <k8s-Service-name> 
-- $ %[1]s generate scripts k8s-service1 k8s-service2
-- $ %[1]s generate scripts <k8s-Service-name> [--namespace ] [--out ]`
+const scaffoldExample = `- $ %[1]s scaffold <k8s-Service-name> 
+- $ %[1]s scaffold k8s-service1 k8s-service2
+- $ %[1]s scaffold <k8s-Service-name> [--namespace ] [--out ]`
 
-func newCmdScripts(
+func newCmdScaffold(
 	workingDir string,
 	io genericclioptions.IOStreams,
 	cliName string,
@@ -37,10 +37,10 @@ func newCmdScripts(
 	tCfg telemetry.Config,
 ) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "scripts [OPTIONS]",
-		Short:   "Generates scripts to test services are healthy using Pod liveness HTTP endpoints",
-		Example: formatCmdExample(scriptsExample, cliName),
-		RunE:    makeRunScripts(workingDir, io),
+		Use:     "scaffold [OPTIONS]",
+		Short:   "Scaffolds test scripts from K8s services using liveness probe HTTP endpoints",
+		Example: formatCmdExample(scaffoldExample, cliName),
+		RunE:    makeRunScaffold(workingDir, io),
 		//PostRunE: func(cmd *cobra.Command, args []string) error {
 		//	testScriptPath, _ := cmd.Flags().GetString("script")
 		//	env, _ := cmd.Flags().GetString("env")
@@ -60,7 +60,7 @@ func newCmdScripts(
 		"namespace",
 		"n",
 		"default",
-		"Optional. Specify Kubernetes namespace for your query - defaults to default",
+		"Optional. Specify a namespace for your services - defaults to default",
 	)
 
 	flags.StringP(
@@ -73,7 +73,7 @@ func newCmdScripts(
 	return cmd
 }
 
-func makeRunScripts(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
+func makeRunScaffold(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		ns, err := cmd.Flags().GetString("namespace")
 		if err != nil {

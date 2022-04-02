@@ -38,7 +38,6 @@ func newCmdGenerate(
 	}
 
 	cmd.AddCommand(newCmdLoadTest(workingDir, io, cliName, tClient, tCfg))
-	cmd.AddCommand(newCmdScripts(workingDir, io, cliName, tClient, tCfg))
 
 	return cmd
 }
