@@ -14,6 +14,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -75,6 +76,10 @@ func newCmdScaffold(
 
 func makeRunScaffold(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		if err := validateScaffold(args); err != nil {
+			return err
+		}
+
 		ns, err := cmd.Flags().GetString("namespace")
 		if err != nil {
 			return err
@@ -138,4 +143,12 @@ func makeRunScaffold(workingDir string, io genericclioptions.IOStreams) func(cmd
 
 		return nil
 	}
+}
+
+func validateScaffold(args []string) error {
+	if len(args) == 0 {
+		return errors.New("missing service name or names")
+	}
+
+	return nil
 }
