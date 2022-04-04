@@ -23,6 +23,7 @@ import (
 const LoadTestFilename = "loadtest-cr.yaml"
 const LabelPrefix = "loadtest"
 const DefaultManifestDir = "artillery-manifests"
+const DefaultScriptsDir = "artillery-scripts"
 const cliSettingsFilename = ".artillerykuberc"
 
 type CLISettings struct {

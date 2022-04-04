@@ -48,6 +48,7 @@ func NewCmdArtillery(
 		},
 	}
 
+	cmd.AddCommand(newCmdScaffold(workingDir, io, cliName, tClient, tCfg))
 	cmd.AddCommand(newCmdGenerate(workingDir, io, cliName, tClient, tCfg))
 
 	return cmd

@@ -104,3 +104,33 @@ func TelemeterGenerateManifests(
 		)
 	}
 }
+
+func TelemeterServicesScaffold(
+	serviceNames []string,
+	namespace, outPath string,
+	tClient posthog.Client,
+	tConfig Config,
+	logger logr.Logger,
+) {
+	if err := enqueue(
+		tClient,
+		tConfig,
+		event{
+			Name: "operator kubectl-artillery scaffold",
+			Properties: map[string]interface{}{
+				"source":           "artillery-operator-kubectl-plugin",
+				"serviceCount":     len(serviceNames),
+				"namespace":        hashEncode(namespace),
+				"defaultOutputDir": len(outPath) == 0,
+			},
+		},
+		logger,
+	); err != nil {
+		logger.Error(err,
+			"could not broadcast telemetry",
+			"telemetry disable", tConfig.Disable,
+			"telemetry debug", tConfig.Debug,
+			"event", "operator kubectl-artillery scaffold",
+		)
+	}
+}

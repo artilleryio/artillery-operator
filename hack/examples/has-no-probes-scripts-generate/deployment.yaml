@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-no-probes-mapped
+  labels:
+    app: nginx-no-probes-mapped
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-no-probes-mapped
+  template:
+    metadata:
+      labels:
+        app: nginx-no-probes-mapped
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          livenessProbe:
+            initialDelaySeconds: 1
+            periodSeconds: 2
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 1
+            httpGet:
+              path: /
+              port: 8080

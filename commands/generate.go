@@ -27,7 +27,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const generateExample = `- $ %[1]s generate <load-test-name> --script path/to/test-script
+const loadtestExample = `- $ %[1]s generate <load-test-name> --script path/to/test-script
 - $ %[1]s generate <load-test-name> -s path/to/test-script
 - $ %[1]s generate <load-test-name> -s path/to/test-script [--env ] [--out ] [--count ]`
 
@@ -41,9 +41,9 @@ func newCmdGenerate(
 	cmd := &cobra.Command{
 		Use:     "generate [OPTIONS]",
 		Aliases: []string{"gen"},
-		Short:   "Generates load test manifests and wires dependencies in a kustomization.yaml file",
-		Example: formatCmdExample(generateExample, cliName),
-		RunE:    makeRunGenerate(workingDir, io),
+		Short:   "Generates load test manifests configured in a kustomization.yaml file",
+		Example: formatCmdExample(loadtestExample, cliName),
+		RunE:    makeRunLoadTest(workingDir, io),
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			testScriptPath, _ := cmd.Flags().GetString("script")
 			env, _ := cmd.Flags().GetString("env")
@@ -94,9 +94,13 @@ func newCmdGenerate(
 	return cmd
 }
 
-func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
+func formatCmdExample(doc, cliName string) string {
+	return fmt.Sprintf(doc, cliName)
+}
+
+func makeRunLoadTest(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		if err := validate(args); err != nil {
+		if err := validateLoadTest(args); err != nil {
 			return err
 		}
 
@@ -105,7 +109,7 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 			return err
 		}
 
-		if err := validateScript(testScriptPath); err != nil {
+		if err := validateLoadTestScript(testScriptPath); err != nil {
 			return err
 		}
 
@@ -159,7 +163,7 @@ func makeRunGenerate(workingDir string, io genericclioptions.IOStreams) func(cmd
 	}
 }
 
-func validate(args []string) error {
+func validateLoadTest(args []string) error {
 	if len(args) == 0 {
 		return errors.New("missing load test name")
 	}
@@ -176,7 +180,7 @@ func validate(args []string) error {
 	return nil
 }
 
-func validateScript(s string) error {
+func validateLoadTestScript(s string) error {
 	absPath, err := filepath.Abs(s)
 	if err != nil {
 		return err
@@ -187,8 +191,4 @@ func validateScript(s string) error {
 	}
 
 	return nil
-}
-
-func formatCmdExample(doc, cliName string) string {
-	return fmt.Sprintf(doc, cliName)
 }

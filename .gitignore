@@ -28,6 +28,7 @@ hack/**/node_modules
 
 # Ignore generated manifests.
 artillery-manifests/
+artillery-scripts/
 
 # editor and IDE paraphernalia
 .idea

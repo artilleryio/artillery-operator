@@ -1,6 +1,6 @@
 module github.com/artilleryio/artillery-operator
 
-go 1.17
+go 1.18
 
 replace github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
 
