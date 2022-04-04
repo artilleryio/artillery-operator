@@ -42,16 +42,14 @@ func newCmdScaffold(
 		Short:   "Scaffolds test scripts from K8s services using liveness probe HTTP endpoints",
 		Example: formatCmdExample(scaffoldExample, cliName),
 		RunE:    makeRunScaffold(workingDir, io),
-		//PostRunE: func(cmd *cobra.Command, args []string) error {
-		//	testScriptPath, _ := cmd.Flags().GetString("script")
-		//	env, _ := cmd.Flags().GetString("env")
-		//	outPath, _ := cmd.Flags().GetString("out")
-		//	count, _ := cmd.Flags().GetInt("count")
-		//
-		//	logger := artillery.NewIOLogger(io.Out, io.ErrOut)
-		//	telemetry.TelemeterGenerateManifests(args[0], testScriptPath, env, outPath, count, tClient, tCfg, logger)
-		//	return nil
-		//},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			ns, _ := cmd.Flags().GetString("namespace")
+			outPath, _ := cmd.Flags().GetString("out")
+
+			logger := artillery.NewIOLogger(io.Out, io.ErrOut)
+			telemetry.TelemeterServicesScaffold(args, ns, outPath, tClient, tCfg, logger)
+			return nil
+		},
 	}
 
 	flags := cmd.Flags()
