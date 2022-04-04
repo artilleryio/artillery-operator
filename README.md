@@ -33,9 +33,9 @@ __Developers__, create and apply [CRs manifests](#loadtest-manifest) to run dist
 
 Minimise faff with our kubectl plugin, `kubectl artillery`.
 
-- Quickly create configured LoadTest CR manifests.
-- Automatically create their required dependencies.
-- Deploy all manifests using a generated [Kustomize](https://kubectl.docs.kubernetes.io) bundle.
+- Scaffold test scripts from existing
+  Kubernetes [Services](https://kubernetes.io/docs/concepts/services-networking/service/).
+- Quickly generate and deploy LoadTest CR manifests and their dependencies.
 
 For more details, see [helper plugin installation and usage](docs/kubectl-artillery-plugin.md).
 
