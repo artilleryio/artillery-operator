@@ -27,7 +27,7 @@ import (
 )
 
 const scaffoldExample = `- $ %[1]s scaffold <k8s-Service-name> 
-- $ %[1]s scaffold k8s-service1 k8s-service2
+- $ %[1]s scaffold <k8s-service1> <k8s-service2>
 - $ %[1]s scaffold <k8s-Service-name> [--namespace ] [--out ]`
 
 func newCmdScaffold(
