@@ -233,7 +233,7 @@ There are now 4 workers running as Pods with different names. These Pod names co
 
 Navigating to the Pushgateway, in our case at `http://localhost:9091`, you'll see:
 
-  <img width="800" alt="pushgateway with workers" src="assets/pushgateway-with-workers.png">
+  <img width="800" alt="pushgateway with workers" src="../assets/pushgateway-with-workers.png">
 
 Clicking on a job matching a Pod name displays the test report metrics for a specific worker:
 
@@ -262,8 +262,8 @@ Now enter into the search input field:
 
 This displays `engine_http_requests` metric for Load Test `test-378dbbbd-03eb-4d0e-8a66-39033a76d0f3`.
 
-  <img width="800" alt="prometheus dashboard" src="assets/prometheus-dashboard.png">
+  <img width="800" alt="prometheus dashboard" src="../assets/prometheus-dashboard.png">
 
 Now let's visualise the metrics by clicking the Graph tab.
 
-  <img width="800" alt="prometheus dashboard with graph" src="assets/prometheus-dashboard-graph.png">
+  <img width="800" alt="prometheus dashboard with graph" src="../assets/prometheus-dashboard-graph.png">
