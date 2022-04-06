@@ -62,7 +62,10 @@ spec:
                   config:
                     properties:
                       configMap:
+                        minLength: 1
                         type: string
+                    required:
+                    - configMap
                     type: object
                   external:
                     properties:
@@ -89,7 +92,11 @@ spec:
                             type: object
                         type: object
                     type: object
+                required:
+                - config
                 type: object
+            required:
+            - testScript
             type: object
           status:
             description: LoadTestStatus defines the observed state of LoadTest
