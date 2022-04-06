@@ -42,11 +42,14 @@ type External struct {
 }
 
 type Config struct {
-	ConfigMap string `json:"configMap,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Required
+	ConfigMap string `json:"configMap"`
 }
 
 type TestScript struct {
-	Config   Config    `json:"config,omitempty"`
+	// +kubebuilder:validation:Required
+	Config   Config    `json:"config"`
 	External *External `json:"external,omitempty"`
 }
 
@@ -55,9 +58,11 @@ type LoadTestSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Count       int        `json:"count,omitempty"`
-	Environment string     `json:"environment,omitempty"`
-	TestScript  TestScript `json:"testScript,omitempty"`
+	Count       int    `json:"count,omitempty"`
+	Environment string `json:"environment,omitempty"`
+
+	// +kubebuilder:validation:Required
+	TestScript TestScript `json:"testScript"`
 }
 
 type LoadTestConditionType string

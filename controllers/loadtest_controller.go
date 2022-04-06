@@ -76,6 +76,11 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
+	result, err = r.ensureTestScriptConfig(ctx, loadTest, logger)
+	if result != nil {
+		return *result, err
+	}
+
 	result, err = r.ensureJob(ctx, loadTest, logger, r.job(loadTest))
 	if result != nil {
 		return *result, err
