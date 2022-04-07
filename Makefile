@@ -182,18 +182,6 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST):
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
-define go-get-install
-@[ -f $(1) ] || { \
-set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
-rm -rf $$TMP_DIR ;\
-}
-endef
-
 .PHONY: bundle
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
@@ -259,9 +247,9 @@ catalog-push: ## Push a catalog image.
 # ** ENSURE the repo is NOT in a dirty state before running the task.
 .PHONY: goreleaser kubeplugin-release, check-release-tag-version, check-release-tag-msg
 
-GORELEASER = $(shell pwd)/bin/goreleaser
+GORELEASER ?= $(LOCALBIN)/goreleaser
 goreleaser: ## Download goreleaser locally if necessary.
-	$(call go-get-install,$(GORELEASER),github.com/goreleaser/goreleaser@latest)
+	GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@latest
 
 check-release-tag-version:
 ifndef KUBEPLUGIN_TAG_VERSION
