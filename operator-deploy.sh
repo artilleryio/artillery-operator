@@ -12,6 +12,7 @@
 #
 
 set -o errexit
+set -o posix
 
 source ./scripts/deploy-helpers.sh
 
