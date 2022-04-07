@@ -34,7 +34,7 @@ if [ ! -f "${kube_prom_zip}" ]; then
 fi
 
 # unpack the operator
-tar -zxvf "${kube_prom_zip}" -C "${script_dir}"
+unzip "${kube_prom_zip}" -d "${script_dir}"
 
 # source: https://prometheus-operator.dev/docs/prologue/quick-start/
 # create the monitoring stack
