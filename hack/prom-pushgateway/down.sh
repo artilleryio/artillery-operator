@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2022.
 #
@@ -12,6 +12,7 @@
 #
 
 set -o errexit
+set -o posix
 
 # full directory name of the script no matter where it is being called from
 # shellcheck disable=SC2039

@@ -1,5 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 set -o errexit
+set -o posix
 
 # full directory name of the script no matter where it is being called from
 script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"

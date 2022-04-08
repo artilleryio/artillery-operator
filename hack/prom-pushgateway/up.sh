@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2022.
 #
@@ -12,6 +12,7 @@
 #
 
 set -o errexit
+set -o posix
 
 # full directory name of the script no matter where it is being called from
 # shellcheck disable=SC2039
@@ -33,7 +34,7 @@ if [ ! -f "${kube_prom_zip}" ]; then
 fi
 
 # unpack the operator
-tar -zxvf "${kube_prom_zip}" -C "${script_dir}"
+unzip "${kube_prom_zip}" -d "${script_dir}"
 
 # source: https://prometheus-operator.dev/docs/prologue/quick-start/
 # create the monitoring stack

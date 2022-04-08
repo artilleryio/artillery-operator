@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2022.
 #
@@ -12,6 +12,7 @@
 #
 
 set -o errexit
+set -o posix
 
 source ./scripts/deploy-helpers.sh
 
