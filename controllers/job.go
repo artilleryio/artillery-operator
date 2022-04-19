@@ -94,8 +94,9 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  v.Name,
-							Image: WorkerImage,
+							Name:            v.Name,
+							Image:           WorkerImage,
+							ImagePullPolicy: corev1.PullAlways,
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      TestScriptVol,
