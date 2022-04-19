@@ -109,6 +109,8 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 							Env: append(
 								[]corev1.EnvVar{
 									// published metrics use WORKER_ID to connect the pod (worker) to a Pushgateway JobID
+									// Uses the downward API:
+									// https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/#the-downward-api
 									{
 										Name: "WORKER_ID",
 										ValueFrom: &corev1.EnvVarSource{
