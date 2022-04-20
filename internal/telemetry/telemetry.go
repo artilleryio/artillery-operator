@@ -15,6 +15,7 @@ package telemetry
 import (
 	"crypto/sha1"
 	"encoding/base64"
+	"fmt"
 	"net"
 	"os"
 	"runtime"
@@ -161,6 +162,12 @@ func (t Config) ToEnvVar() []core.EnvVar {
 		{
 			Name:  "ARTILLERY_TELEMETRY_DEBUG",
 			Value: strconv.FormatBool(t.Debug),
+		},
+		// This a serialised JSON object that will be propagated
+		// on every worker event
+		{
+			Name:  "ARTILLERY_TELEMETRY_DEFAULTS",
+			Value: fmt.Sprintf(`{"testRunner": "%s"}`, t.AppName),
 		},
 	}
 }
