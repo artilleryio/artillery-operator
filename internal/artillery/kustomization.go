@@ -22,10 +22,12 @@ import (
 	"sigs.k8s.io/kustomize/api/types"
 )
 
+// Kustomization wrapper to enable marshaling a Kustomization to a file
 type Kustomization struct {
 	*types.Kustomization
 }
 
+// NewKustomization returns a configured Kustomization wrapper for a LoadTest
 func NewKustomization(loadtest, configMap, testScript, labelPrefix string) *Kustomization {
 	testScript = filepath.Base(testScript)
 
@@ -59,6 +61,7 @@ func NewKustomization(loadtest, configMap, testScript, labelPrefix string) *Kust
 	return k
 }
 
+// MarshalWithIndent marshals a Kustomization using a specified indentation.
 func (k *Kustomization) MarshalWithIndent(indent int) ([]byte, error) {
 	var out bytes.Buffer
 	encoder := yaml3.NewEncoder(&out)

@@ -19,20 +19,28 @@ import (
 	"github.com/go-logr/logr"
 )
 
+// NewIOLogger returns a simple configurable logger implementation.
 func NewIOLogger(stdOut io.Writer, stdErr io.Writer) logr.Logger {
 	return &IOLogger{stdOut: stdOut, stdErr: stdErr, keysAndValues: []interface{}{}}
 }
 
+// IOLogger stdOut and stdErr targeted logger.
 type IOLogger struct {
 	stdOut        io.Writer
 	stdErr        io.Writer
 	keysAndValues []interface{}
 }
 
-func (l *IOLogger) Enabled() bool                 { return true }
-func (l *IOLogger) V(_ int) logr.Logger           { return l }
+// Enabled fulfills the logger interface.
+func (l *IOLogger) Enabled() bool { return true }
+
+// V fulfills the logger interface.
+func (l *IOLogger) V(_ int) logr.Logger { return l }
+
+// WithName fulfills the logger interface.
 func (l *IOLogger) WithName(_ string) logr.Logger { return l }
 
+// Info prints info style logs to stdOut
 func (l *IOLogger) Info(msg string, keysAndValues ...interface{}) {
 	if len(l.keysAndValues) > 0 {
 		_, _ = l.stdOut.Write([]byte(fmt.Sprintf("%s %+v %+v\n", msg, l.keysAndValues, keysAndValues)))
@@ -41,6 +49,7 @@ func (l *IOLogger) Info(msg string, keysAndValues ...interface{}) {
 	}
 }
 
+// Error prints error style logs to stdErr
 func (l *IOLogger) Error(err error, msg string, keysAndValues ...interface{}) {
 	if len(l.keysAndValues) > 0 {
 		_, _ = l.stdErr.Write([]byte(fmt.Sprintf("%s ... %s %+v %+v\n", err.Error(), msg, l.keysAndValues, keysAndValues)))
@@ -49,6 +58,7 @@ func (l *IOLogger) Error(err error, msg string, keysAndValues ...interface{}) {
 	}
 }
 
+// WithValues appends log keys and values to every log message
 func (l *IOLogger) WithValues(keysAndValues ...interface{}) logr.Logger {
 	l.keysAndValues = keysAndValues
 	return l

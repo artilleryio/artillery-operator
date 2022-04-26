@@ -26,15 +26,19 @@ const DefaultManifestDir = "artillery-manifests"
 const DefaultScriptsDir = "artillery-scripts"
 const cliSettingsFilename = ".artillerykuberc"
 
+// CLISettings defines global settings used by the kubectl-artillery CLI.
 type CLISettings struct {
 	File      string                `yaml:"-" json:"-"`
 	Analytics *TelemetryCLISettings `yaml:"kubectl-artillery,omitempty" json:"kubectl-artillery,omitempty"`
 }
 
+// TelemetryCLISettings telemetry specific settings.
 type TelemetryCLISettings struct {
 	FirstRun *bool `yaml:"telemetry-first-run-msg,omitempty" json:"telemetry-first-run-msg,omitempty"`
 }
 
+// GetOrCreateCLISettings retrieves the kubectl-artillery CLI settings.
+// Creates a new settings file if one doesn't already exist.
 func GetOrCreateCLISettings() (*CLISettings, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -71,15 +75,18 @@ func GetOrCreateCLISettings() (*CLISettings, error) {
 	return &out, nil
 }
 
+// GetFirstRun returns if this is the first run of kubectl-artillery CLI.
 func (s *CLISettings) GetFirstRun() bool {
 	return *s.Analytics.FirstRun
 }
 
+// SetFirstRun configures the first run of kubectl-artillery CLI.
 func (s *CLISettings) SetFirstRun(b bool) *CLISettings {
 	s.Analytics.FirstRun = &b
 	return s
 }
 
+// Save writes the kubectl-artillery CLI settings to a file.
 func (s *CLISettings) Save() error {
 	data, err := yaml.Marshal(s)
 	if err != nil {

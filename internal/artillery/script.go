@@ -21,46 +21,58 @@ import (
 	yaml3 "gopkg.in/yaml.v3"
 )
 
+// TestScript defines a simple Artillery test script.
+// Mainly used to generate a test script YAML config.
+// See: https://www.artillery.io/docs/guides/guides/test-script-reference
 type TestScript struct {
 	Config    Config     `json:"config" yaml:"config"`
 	Scenarios []Scenario `json:"scenarios" yaml:"scenarios"`
 }
 
+// Config defines a test script's config.
 type Config struct {
 	Target       string                 `json:"target" yaml:"target"`
 	Phases       []Phase                `json:"phases,omitempty" yaml:"phases,omitempty"`
 	Environments map[string]Environment `json:"environments,omitempty" yaml:"environments,omitempty"`
 }
 
+// Phase defines a test script's phase.
 type Phase struct {
 	Duration     int `json:"duration,omitempty" yaml:"duration,omitempty"`
 	ArrivalCount int `json:"arrivalCount,omitempty" yaml:"arrivalCount,omitempty"`
 	ArrivalRate  int `json:"arrivalRate,omitempty" yaml:"arrivalRate,omitempty"`
 }
 
+// Environment defines a test script's environment.
 type Environment struct {
 	Phases  []Phase                `json:"phases" yaml:"phases"`
 	Target  string                 `json:"target,omitempty" yaml:"target,omitempty"`
 	Plugins map[string]interface{} `json:"plugins" yaml:"plugins"`
 }
 
+// Scenario defines a test script's scenario.
 type Scenario struct {
 	Flows []Flow `json:"flow,omitempty" yaml:"flow,omitempty"`
 }
 
+// Flow defines a test script's flow.
 type Flow struct {
 	GetFlow GetFlow `json:"get,omitempty" yaml:"get,omitempty"`
 }
 
+// GetFlow defines a test script's get flow.
 type GetFlow struct {
 	Url    string       `json:"url,omitempty" yaml:"url,omitempty"`
 	Expect []StatusCode `json:"expect,omitempty" yaml:"expect,omitempty"`
 }
 
+// StatusCode HTTP status code for a test script's get flow
 type StatusCode struct {
 	Code int `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
 }
 
+// NewTestScript returns an Artillery test script configured to run HTTP functional tests
+// for provided services, targeting a service's exposed healthcheck probes.
 func NewTestScript(probes kube.ServiceProbes) *TestScript {
 	var flows []Flow
 	for _, probe := range probes {
@@ -107,6 +119,7 @@ func NewTestScript(probes kube.ServiceProbes) *TestScript {
 	}
 }
 
+// MarshalWithIndent marshals a TestScript using a specified indentation.
 func (t *TestScript) MarshalWithIndent(indent int) ([]byte, error) {
 	var out bytes.Buffer
 	encoder := yaml3.NewEncoder(&out)

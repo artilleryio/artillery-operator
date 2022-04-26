@@ -18,6 +18,8 @@ import (
 	yaml3 "gopkg.in/yaml.v3"
 )
 
+// FileMarshaler defines methods to Marshal an object
+// to a file using a specified indentation.
 type FileMarshaler interface {
 	MarshalWithIndent(int) ([]byte, error)
 }

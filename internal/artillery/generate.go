@@ -18,13 +18,16 @@ import (
 	"path/filepath"
 )
 
+// Generatable defines where and how (using the Marshaler) to generate a file.
 type Generatable struct {
 	Path      string
 	Marshaler FileMarshaler
 }
 
+// Generatables a convenience type that defines a list of Generatable types.
 type Generatables []Generatable
 
+// generate writes a file using a Marshaler configured with a specified indentation.
 func (g Generatable) generate(indent int) (n int64, err error) {
 	data, err := g.Marshaler.MarshalWithIndent(indent)
 	if err != nil {
@@ -49,6 +52,7 @@ func (g Generatable) generate(indent int) (n int64, err error) {
 	return int64(written), file.Close()
 }
 
+// Generate generates files for all Generatables.
 func (gs Generatables) Generate(indent int) (string, error) {
 	var msg string
 	for i, g := range gs {
