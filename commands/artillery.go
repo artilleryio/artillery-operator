@@ -25,6 +25,7 @@ import (
 
 const cliName = "kubectl artillery"
 
+// NewCmdArtillery creates the kubectl-artillery CLI root command
 func NewCmdArtillery(
 	workingDir string,
 	io genericclioptions.IOStreams,
@@ -54,6 +55,8 @@ func NewCmdArtillery(
 	return cmd
 }
 
+// highlightTelemetryIfRequired informs CLI users whether telemetry is on or not.
+// Will only display telemetry status on first run
 func highlightTelemetryIfRequired(out io.Writer) error {
 	settings, err := artillery.GetOrCreateCLISettings()
 	if err != nil {

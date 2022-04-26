@@ -30,6 +30,7 @@ const scaffoldExample = `- $ %[1]s scaffold <k8s-Service-name>
 - $ %[1]s scaffold <k8s-service1> <k8s-service2>
 - $ %[1]s scaffold <k8s-Service-name> [--namespace ] [--out ]`
 
+// newCmdScaffold creates the test script scaffold command
 func newCmdScaffold(
 	workingDir string,
 	io genericclioptions.IOStreams,
@@ -40,7 +41,7 @@ func newCmdScaffold(
 	cmd := &cobra.Command{
 		Use:     "scaffold [OPTIONS]",
 		Short:   "Scaffolds test scripts from K8s services using liveness probe HTTP endpoints",
-		Example: formatCmdExample(scaffoldExample, cliName),
+		Example: fmt.Sprintf(scaffoldExample, cliName),
 		RunE:    makeRunScaffold(workingDir, io),
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			ns, _ := cmd.Flags().GetString("namespace")
@@ -72,6 +73,7 @@ func newCmdScaffold(
 	return cmd
 }
 
+// makeRunScaffold creates the RunE function used to scaffold a test script
 func makeRunScaffold(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if err := validateScaffold(args); err != nil {
@@ -143,6 +145,7 @@ func makeRunScaffold(workingDir string, io genericclioptions.IOStreams) func(cmd
 	}
 }
 
+// validateScaffold validates scaffold command arguments
 func validateScaffold(args []string) error {
 	if len(args) == 0 {
 		return errors.New("missing service name or names")

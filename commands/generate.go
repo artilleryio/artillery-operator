@@ -31,6 +31,7 @@ const loadtestExample = `- $ %[1]s generate <load-test-name> --script path/to/te
 - $ %[1]s generate <load-test-name> -s path/to/test-script
 - $ %[1]s generate <load-test-name> -s path/to/test-script [--env ] [--out ] [--count ]`
 
+// newCmdGenerate creates the loadtest generate command
 func newCmdGenerate(
 	workingDir string,
 	io genericclioptions.IOStreams,
@@ -42,7 +43,7 @@ func newCmdGenerate(
 		Use:     "generate [OPTIONS]",
 		Aliases: []string{"gen"},
 		Short:   "Generates load test manifests configured in a kustomization.yaml file",
-		Example: formatCmdExample(loadtestExample, cliName),
+		Example: fmt.Sprintf(loadtestExample, cliName),
 		RunE:    makeRunLoadTest(workingDir, io),
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			testScriptPath, _ := cmd.Flags().GetString("script")
@@ -94,10 +95,7 @@ func newCmdGenerate(
 	return cmd
 }
 
-func formatCmdExample(doc, cliName string) string {
-	return fmt.Sprintf(doc, cliName)
-}
-
+// makeRunLoadTest creates the RunE function used to generate a load test
 func makeRunLoadTest(workingDir string, io genericclioptions.IOStreams) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if err := validateLoadTest(args); err != nil {
@@ -109,7 +107,7 @@ func makeRunLoadTest(workingDir string, io genericclioptions.IOStreams) func(cmd
 			return err
 		}
 
-		if err := validateLoadTestScript(testScriptPath); err != nil {
+		if err := validateLoadTestScriptExists(testScriptPath); err != nil {
 			return err
 		}
 
@@ -163,6 +161,11 @@ func makeRunLoadTest(workingDir string, io genericclioptions.IOStreams) func(cmd
 	}
 }
 
+// validateLoadTest validates loadtest RunE arguments.
+// Including,
+// - Extra supplied arguments
+// - Missing loadtest name
+// - Invalid named loadtest
 func validateLoadTest(args []string) error {
 	if len(args) == 0 {
 		return errors.New("missing load test name")
@@ -180,7 +183,8 @@ func validateLoadTest(args []string) error {
 	return nil
 }
 
-func validateLoadTestScript(s string) error {
+// validateLoadTestScriptExists validates the loadtest script file exists.
+func validateLoadTestScriptExists(s string) error {
 	absPath, err := filepath.Abs(s)
 	if err != nil {
 		return err
