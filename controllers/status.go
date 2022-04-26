@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// ObservedStatus defines expected observed statuses for a LoadTest.
 type ObservedStatus uint
 
 const (
@@ -40,6 +41,11 @@ const (
 	LoadTestCompleted
 )
 
+// updateStatus updates the LoadTestStatus based on the status of created LoadTest objects.
+// This includes updates to,
+// - Conditions
+// - Status properties
+// - PrinterColumns
 func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest, logger logr.Logger) (*reconcile.Result, error) {
 	found := &v1.Job{}
 	err := r.Get(ctx, types.NamespacedName{
@@ -52,7 +58,7 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest, l
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if err := relayStatus(ctx, v, r, found, logger); err != nil {
+		if err := configureStatus(ctx, v, r, found, logger); err != nil {
 			return err
 		}
 		return r.Status().Update(ctx, v)
@@ -65,7 +71,15 @@ func (r *LoadTestReconciler) updateStatus(ctx context.Context, v *lt.LoadTest, l
 	return nil, nil
 }
 
-func relayStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job *v1.Job, logger logr.Logger) error {
+// configureStatus configures, and if need be, broadcasts the LoadTest status
+// based on observed status of the created Job object.
+func configureStatus(
+	ctx context.Context,
+	v *lt.LoadTest,
+	r *LoadTestReconciler,
+	job *v1.Job,
+	logger logr.Logger,
+) error {
 	observedStatus := observedStatus(job.Status)
 	configureStatesAndPrinterColumns(v, job)
 
@@ -73,13 +87,13 @@ func relayStatus(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, job
 	if err := broadcastIfActiveOrCompleted(ctx, v, r, observedStatus, logger); err != nil {
 		return err
 	}
-	// Configuration should always happen after any events are published
+	// Configuration should always happen after any events are published.
 	configureStartupAndCompletion(v, observedStatus)
 
 	return nil
 }
 
-// observedStatus relays a load test's observed status from its related Job
+// observedStatus relays a load test's observed status from its related Job.
 func observedStatus(s v1.JobStatus) ObservedStatus {
 	switch {
 	case jobConditionsActive(s) && (s.Active > (s.Succeeded + s.Failed)):
@@ -91,21 +105,21 @@ func observedStatus(s v1.JobStatus) ObservedStatus {
 	}
 }
 
-// jobConditionsActive use Job conditions to conclude if a job is active
+// jobConditionsActive use Job conditions to conclude if a job is active.
 func jobConditionsActive(s v1.JobStatus) bool {
 	suspended, complete, failed := jobConditions(s)
 	running := suspended == false && complete == false && failed == false
 	return s.StartTime != nil && running
 }
 
-// jobConditionsCompleted use Job conditions to conclude if a job has completed
+// jobConditionsCompleted use Job conditions to conclude if a job has completed.
 func jobConditionsCompleted(s v1.JobStatus) bool {
 	suspended, complete, failed := jobConditions(s)
 	completed := suspended == false && complete == true && failed == false
 	return s.StartTime != nil && s.CompletionTime != nil && completed
 }
 
-// jobConditions returns whether a Job is suspended, complete or failed by traversing all found Conditions
+// jobConditions returns whether a Job is suspended, complete or failed by traversing all found Conditions.
 func jobConditions(s v1.JobStatus) (suspended bool, complete bool, failed bool) {
 	for _, c := range s.Conditions {
 		suspended = c.Type == v1.JobSuspended
@@ -115,6 +129,8 @@ func jobConditions(s v1.JobStatus) (suspended bool, complete bool, failed bool) 
 	return
 }
 
+// setConditions sets the LoadTest's Status Conditions based on
+// the provided observed state.
 func setConditions(v *lt.LoadTest, o ObservedStatus) {
 	var progressing lt.LoadTestCondition
 	var completed lt.LoadTestCondition
@@ -149,6 +165,10 @@ func setConditions(v *lt.LoadTest, o ObservedStatus) {
 	}).([]lt.LoadTestCondition)
 }
 
+// configureStatesAndPrinterColumns configures LoadTestStatus properties
+// and printer column values.
+// For printercolumns see:
+// https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#additional-printer-columns
 func configureStatesAndPrinterColumns(v *lt.LoadTest, job *v1.Job) {
 	configureStates(v, job)
 	configurePrinterColumns(v, job)
@@ -177,6 +197,8 @@ func conditionsMap(conditions []lt.LoadTestCondition) map[lt.LoadTestConditionTy
 	return out
 }
 
+// configureStartupAndCompletion configures the start and completion time of a LoadTest
+// based on the provided observed state.
 func configureStartupAndCompletion(v *lt.LoadTest, o ObservedStatus) {
 	switch o {
 	case LoadTestActive:
@@ -193,6 +215,7 @@ func configureStartupAndCompletion(v *lt.LoadTest, o ObservedStatus) {
 	}
 }
 
+// broadcastIfActiveOrCompleted broadcasts informational events to mark that a LoadTest has started or completed.
 func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTestReconciler, o ObservedStatus, logger logr.Logger) error {
 	switch {
 	case o == LoadTestActive && v.Status.StartTime == nil:
@@ -220,6 +243,7 @@ func broadcastIfActiveOrCompleted(ctx context.Context, v *lt.LoadTest, r *LoadTe
 	return nil
 }
 
+// getPods returns all the worker Pods for a given LoadTest.
 func getPods(ctx context.Context, v *lt.LoadTest, ctl client.Client) (*corev1.PodList, error) {
 	podList := &corev1.PodList{}
 	listOpts := []client.ListOption{
@@ -232,6 +256,7 @@ func getPods(ctx context.Context, v *lt.LoadTest, ctl client.Client) (*corev1.Po
 	return podList, nil
 }
 
+// loadTestDuration returns a formatted LoadTest duration.
 func loadTestDuration(status lt.LoadTestStatus) string {
 	var d string
 	switch {
@@ -245,6 +270,9 @@ func loadTestDuration(status lt.LoadTestStatus) string {
 	return d
 }
 
+// loadTestCompletions returns a formatted value of how many LoadTest workers
+// have completed from the total of all workers, e.g. 1/4.
+// It takes worker parallelism into account.
 func loadTestCompletions(status lt.LoadTestStatus, jobCompletions, jobParallelism *int32) string {
 	if jobCompletions != nil {
 		return fmt.Sprintf("%d/%d", status.Succeeded, *jobCompletions)

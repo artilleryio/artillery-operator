@@ -23,6 +23,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
+// ensureTestScriptConfig ensures the test script ConfigMap defined
+// in the LoadTest Custom Resource is available on the cluster.
+// If not, a Warning event is triggered.
+// This event is viewable when running: kubectl describe loadtest <loadtest-name>.
 func (r *LoadTestReconciler) ensureTestScriptConfig(ctx context.Context,
 	instance *lt.LoadTest,
 	logger logr.Logger) (*ctrl.Result, error) {
