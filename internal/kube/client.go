@@ -17,11 +17,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// Client defines the K8s client.
 type Client struct {
 	CfgNamespace string
 	*kubernetes.Clientset
 }
 
+// NewClient returns a K8s client configured with ConfigFlags.
+// ConfigFlags compose the set of values necessary for obtaining K8s REST client config.
 func NewClient(configFlags *genericclioptions.ConfigFlags) (*Client, error) {
 	config := configFlags.ToRawKubeConfigLoader()
 
