@@ -18,6 +18,7 @@ import (
 	"github.com/posthog/posthog-go"
 )
 
+// TelemeterActive enqueues a load test has started event.
 func TelemeterActive(v *lt.LoadTest, tClient posthog.Client, tConfig Config, logger logr.Logger) {
 	if err := enqueue(
 		tClient,
@@ -45,6 +46,7 @@ func TelemeterActive(v *lt.LoadTest, tClient posthog.Client, tConfig Config, log
 	}
 }
 
+// TelemeterCompletion enqueues a load test has completed event.
 func TelemeterCompletion(v *lt.LoadTest, tClient posthog.Client, tConfig Config, logger logr.Logger) {
 	err := enqueue(
 		tClient,
@@ -73,6 +75,7 @@ func TelemeterCompletion(v *lt.LoadTest, tClient posthog.Client, tConfig Config,
 	}
 }
 
+// TelemeterGenerateManifests enqueues a kubectl-artillery generate command event.
 func TelemeterGenerateManifests(
 	name, testScriptPath, env, outPath string,
 	count int,
@@ -105,6 +108,7 @@ func TelemeterGenerateManifests(
 	}
 }
 
+// TelemeterServicesScaffold enqueues a kubectl-artillery scaffold command event.
 func TelemeterServicesScaffold(
 	serviceNames []string,
 	namespace, outPath string,
