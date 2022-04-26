@@ -65,6 +65,7 @@ type LoadTestSpec struct {
 	TestScript TestScript `json:"testScript"`
 }
 
+// LoadTestConditionType creates types for K8s Conditions created by the operator
 type LoadTestConditionType string
 
 // These are valid conditions of a load-test.
@@ -75,6 +76,7 @@ const (
 	LoadTestCompleted LoadTestConditionType = "Completed"
 )
 
+// LoadTestCondition provides a standard mechanism for higher-level status reporting
 type LoadTestCondition struct {
 	// Type of job condition, Progressing, Complete or Failed.
 	Type LoadTestConditionType `json:"type"`

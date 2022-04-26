@@ -19,6 +19,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// NewLoadTest creates a new LoadTest using provided loadtest name, ConfigMap name,
+// loadtest env and loadtest worker count.
 func NewLoadTest(loadTestName, configMapName, env string, count int) *LoadTest {
 	kind := "LoadTest"
 	apiVersion := "loadtest.artillery.io/v1alpha1"
@@ -48,6 +50,7 @@ func NewLoadTest(loadTestName, configMapName, env string, count int) *LoadTest {
 	}
 }
 
+// MarshalWithIndent marshals a loadtest to YAML taking care of defaults and indentation.
 func (lt *LoadTest) MarshalWithIndent(indent int) ([]byte, error) {
 	j, err := lt.json()
 	if err != nil {
@@ -63,6 +66,7 @@ func (lt *LoadTest) MarshalWithIndent(indent int) ([]byte, error) {
 	return y, nil
 }
 
+// json marshals a loadtest to json usually when marshaling a loadtest to YAML.
 func (lt *LoadTest) json() ([]byte, error) {
 	j, err := json.Marshal(lt)
 	if err != nil {
