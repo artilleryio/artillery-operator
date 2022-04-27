@@ -99,7 +99,6 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-# TODO: There are no envtest binaries for darwin-arm64 which breaks tests. Revisit to fix this.
 # NOTE: As of yet, we currently have no e2e tests to run.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
