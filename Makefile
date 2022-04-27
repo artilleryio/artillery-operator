@@ -1,3 +1,6 @@
+# ARTILLERY OPERATOR
+# ------------------
+
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
@@ -58,12 +61,6 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-# Artillery with enabled prometheus metrics publishing image details
-ARTILLERY_METRICS_IMAGE_PLATFORM ?= linux/amd64  ## Use linux/arm64 for Apple silicon builds
-ARTILLERY_METRICS_IMAGE_VERSION ?= v2.0.0
-ARTILLERY_METRICS_IMAGE_TAG ?= artillery-metrics-enabled:${ARTILLERY_METRICS_IMAGE_VERSION}
-ARTILLERY_METRICS_IMAGE_REMOTE ?= $(IMAGE_REPO_OWNER)/$(ARTILLERY_METRICS_IMAGE_TAG)
-
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -88,17 +85,6 @@ all: build
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-##@ Artillery with enabled prometheus metrics publishing
-
-.PHONY: docker-build-metrics
-docker-build-metrics: ## Build artillery with enabled prometheus metrics publishing docker image.
-	docker build --no-cache --platform ${ARTILLERY_METRICS_IMAGE_PLATFORM} -f ./hack/metrics/Dockerfile.metricsv2 -t ${ARTILLERY_METRICS_IMAGE_TAG} .
-	docker tag ${ARTILLERY_METRICS_IMAGE_TAG} ${ARTILLERY_METRICS_IMAGE_REMOTE}
-
-.PHONY: docker-push-metrics
-docker-push-metrics: ## Push artillery with enabled prometheus metrics publishing docker image.
-	docker push ${ARTILLERY_METRICS_IMAGE_REMOTE}
-
 ##@ Development
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -115,8 +101,8 @@ vet: ## Run go vet against code.
 
 # TODO: There are no envtest binaries for darwin-arm64 which breaks tests. Revisit to fix this.
 # NOTE: As of yet, we currently have no e2e tests to run.
-#test: manifests generate fmt vet envtest ## Run tests.
-#	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+test: manifests generate fmt vet envtest ## Run tests.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
 
@@ -126,8 +112,7 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	ARTILLERY_DISABLE_TELEMETRY=true go run ./main.go
 
-#docker-build: test ## Build docker image with the manager.
-docker-build: ## Build docker image with the manager.
+docker-build: test ## Build docker image with the manager.
 	docker build --platform ${IMAGE_PLATFORM} -t ${IMAGE_COMMIT_TAG} .
 	docker tag ${IMAGE_COMMIT_TAG} ${IMG}
 
@@ -238,6 +223,19 @@ catalog-build: opm ## Build a catalog image.
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 
+# KUBECTL-ARTILLERY PLUGIN
+# ------------------------
+
+##@ Artillery kubectl plugin: build
+
+## After plugin build, ensure the built binary is available on your path, so kubectl can discover and run it.
+# e.g.: export PATH="$GOPATH/src/github.com/artilleryio/artillery-operator/bin:$PATH"
+# SEE using a plugin: https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/#using-a-plugin
+plugin-build: ## Build kubectl-artillery plugin binary.
+	go build -o bin/kubectl-artillery cmd/kubectl-artillery/main.go
+
+##@ Artillery kubectl plugin: release
+
 # Create a draft release distribution of the kubectl-artillery plugin.
 # The draft release is created using goreleaser - downloaded locally if necessary.
 # It creates a draft release page on Github and requires an access token stored in a .goreleaser-github-token file.
@@ -261,12 +259,11 @@ ifndef KUBEPLUGIN_TAG_MSG
 	$(error KUBEPLUGIN_TAG_MSG a message is required to tag the kubectl-artillery release)
 endif
 
-## creates a draft release of the artillery kubectl plugin on Github see .goreleaser.yaml
-kubeplugin-release: check-release-tag-version check-release-tag-msg goreleaser
+kubeplugin-release: check-release-tag-version check-release-tag-msg goreleaser ## Creates a draft release of the artillery kubectl plugin on Github see .goreleaser.yaml.
 	git tag -a "v$(KUBEPLUGIN_TAG_VERSION)" -m "$(KUBEPLUGIN_TAG_MSG)"
 	git push --tags
 	$(GORELEASER) release --config .goreleaser.yaml --rm-dist
 
-clean-release-tags: check-release-tag-version
+clean-release-tags: check-release-tag-version ## Removes draft release tags to abort a release.
 	git tag -d "v$(KUBEPLUGIN_TAG_VERSION)"
 	git push origin ":refs/tags/v$(KUBEPLUGIN_TAG_VERSION)"
