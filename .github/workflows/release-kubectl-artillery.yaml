@@ -1,0 +1,27 @@
+name: release-kubectl-artillery
+on:
+  push:
+    tags:
+      - kubectl-artillery-plugin-v**
+jobs:
+  release-kubectl-artillery-plugin:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set release version as output
+        id: vars
+        run: echo ::set-output name=version::${GITHUB_REF_NAME/kubectl-artillery-plugin-/}
+
+      - name: Build and push versioned image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo $GITHUB_TOKEN
+          make kubeplugin-release

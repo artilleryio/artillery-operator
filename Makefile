@@ -253,21 +253,24 @@ GORELEASER ?= $(LOCALBIN)/goreleaser
 goreleaser: ## Download goreleaser locally if necessary.
 	GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@latest
 
-check-release-tag-version:
-ifndef KUBEPLUGIN_TAG_VERSION
-	$(error KUBEPLUGIN_TAG_VERSION a tag version is required to tag the kubectl-artillery release)
-endif
+#check-release-tag-version:
+#ifndef KUBEPLUGIN_TAG_VERSION
+#	$(error KUBEPLUGIN_TAG_VERSION a tag version is required to tag the kubectl-artillery release)
+#endif
+#
+#check-release-tag-msg:
+#ifndef KUBEPLUGIN_TAG_MSG
+#	$(error KUBEPLUGIN_TAG_MSG a message is required to tag the kubectl-artillery release)
+#endif
 
-check-release-tag-msg:
-ifndef KUBEPLUGIN_TAG_MSG
-	$(error KUBEPLUGIN_TAG_MSG a message is required to tag the kubectl-artillery release)
-endif
+#kubeplugin-release: check-release-tag-version check-release-tag-msg goreleaser ## Creates a draft release of the artillery kubectl plugin on Github see .goreleaser.yaml.
+#	git tag -a "v$(KUBEPLUGIN_TAG_VERSION)" -m "$(KUBEPLUGIN_TAG_MSG)"
+#	git push --tags
+#	$(GORELEASER) release --config .goreleaser.yaml --rm-dist
 
-kubeplugin-release: check-release-tag-version check-release-tag-msg goreleaser ## Creates a draft release of the artillery kubectl plugin on Github see .goreleaser.yaml.
-	git tag -a "v$(KUBEPLUGIN_TAG_VERSION)" -m "$(KUBEPLUGIN_TAG_MSG)"
-	git push --tags
+kubeplugin-release: goreleaser ## Creates a draft release of the artillery kubectl plugin on Github see .goreleaser.yaml.
 	$(GORELEASER) release --config .goreleaser.yaml --rm-dist
 
-clean-release-tags: check-release-tag-version ## Removes draft release tags to abort a release.
-	git tag -d "v$(KUBEPLUGIN_TAG_VERSION)"
-	git push origin ":refs/tags/v$(KUBEPLUGIN_TAG_VERSION)"
+#clean-release-tags: check-release-tag-version ## Removes draft release tags to abort a release.
+#	git tag -d "v$(KUBEPLUGIN_TAG_VERSION)"
+#	git push origin ":refs/tags/v$(KUBEPLUGIN_TAG_VERSION)"
