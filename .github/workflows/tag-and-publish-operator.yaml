@@ -1,6 +1,6 @@
 name: tag-and-publish-operator
 on:
-  create:
+  push:
     tags:
       - artillery-operator-alpha-v**
 jobs:
