@@ -1,6 +1,8 @@
 # ARTILLERY OPERATOR
 # ------------------
 
+THIS_FILE := $(lastword $(MAKEFILE_LIST))
+
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
@@ -113,6 +115,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 docker-build: test ## Build docker image with the manager.
 	docker build --platform ${IMAGE_PLATFORM} -t ${IMAGE_COMMIT_TAG} .
+	$(MAKE) -f $(THIS_FILE) docker-tag
+
+docker-tag:
 	docker tag ${IMAGE_COMMIT_TAG} ${IMG}
 
 docker-push: ## Push docker image with the manager.

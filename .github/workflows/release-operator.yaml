@@ -1,0 +1,52 @@
+name: release-operator
+on:
+  push:
+    tags:
+      - artillery-operator-alpha-v*
+jobs:
+  publish-image-and-draft-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set release version as output
+        id: vars
+        run: echo ::set-output name=version::${GITHUB_REF_NAME/artillery-operator-alpha-/}
+
+      - name: Log in to registry
+        # This is where you will update the PAT to GITHUB_TOKEN
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Build and push versioned image
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+          IMAGE_REPO_OWNER: ghcr.io/artilleryio
+        run: |
+          echo $VERSION
+          echo $IMAGE_REPO_OWNER
+          make docker-build docker-push
+
+      - name: Tag and push latest image
+        env:
+          VERSION: latest
+          IMAGE_REPO_OWNER: ghcr.io/artilleryio
+        run: |
+          echo $VERSION
+          echo $IMAGE_REPO_OWNER
+          make docker-tag docker-push
+
+      - name: Create a release draft for the version tag
+        id: create-release-draft
+        uses: ecampidoglio/auto-release-draft@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print the URL of the release draft
+        if: steps.create-release-draft.outputs.release-url != ''
+        run: echo ${{ steps.create-release-draft.outputs.release-url }}
