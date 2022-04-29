@@ -15,13 +15,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set release version as output
-        id: vars
-        run: echo ::set-output name=version::${GITHUB_REF_NAME/kubectl-artillery-plugin-/}
-
-      - name: Build and push versioned image
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Gorelease kubectl-artillery plugin
         run: |
-          echo $GITHUB_TOKEN
+          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           make kubeplugin-release
