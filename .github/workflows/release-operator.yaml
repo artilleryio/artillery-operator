@@ -2,7 +2,7 @@ name: release-operator
 on:
   create:
     tags:
-      - artillery-operator-alpha-v*
+      - v**-artillery-operator-alpha
 jobs:
   publish-image-and-draft-release:
     runs-on: ubuntu-latest
@@ -17,7 +17,7 @@ jobs:
 
       - name: Set release version as output
         id: vars
-        run: echo ::set-output name=version::${GITHUB_REF_NAME/artillery-operator-alpha-/}
+        run: echo ::set-output name=version::${GITHUB_REF_NAME/-artillery-operator-alpha/}
 
       - name: Log in to registry
         # This is where you will update the PAT to GITHUB_TOKEN
