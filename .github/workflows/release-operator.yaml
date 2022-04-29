@@ -43,7 +43,7 @@ jobs:
 
       - name: Create a release draft for the version tag
         id: create-release-draft
-        uses: ecampidoglio/auto-release-draft@v1
+        uses: ecampidoglio/auto-release-draft@v1.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
