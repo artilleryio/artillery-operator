@@ -1,6 +1,6 @@
 name: release-operator
 on:
-  push:
+  create:
     tags:
       - artillery-operator-alpha-v*
 jobs:
@@ -32,14 +32,14 @@ jobs:
           echo $IMAGE_REPO_OWNER
           make docker-build docker-push
 
-      #      - name: Tag and push latest image
-      #        env:
-      #          VERSION: latest
-      #          IMAGE_REPO_OWNER: ghcr.io/artilleryio
-      #        run: |
-      #          echo $VERSION
-      #          echo $IMAGE_REPO_OWNER
-      #          make docker-tag docker-push
+      - name: Tag and push latest image
+        env:
+          VERSION: latest
+          IMAGE_REPO_OWNER: ghcr.io/artilleryio
+        run: |
+          echo $VERSION
+          echo $IMAGE_REPO_OWNER
+          make docker-tag docker-push
 
       - name: Auto Release Draft
         # You may pin to the exact commit or the version.
