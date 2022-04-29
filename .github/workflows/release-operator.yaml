@@ -41,10 +41,12 @@ jobs:
       #          echo $IMAGE_REPO_OWNER
       #          make docker-tag docker-push
 
-      - name: Create a release draft for the version tag
-        id: create-release-draft
+      - name: Auto Release Draft
+        # You may pin to the exact commit or the version.
+        # uses: ecampidoglio/auto-release-draft@c1617ba27945d4c224bbe1552e924cf539b508e9
         uses: ecampidoglio/auto-release-draft@v1.0.0
         with:
+          # The GITHUB_TOKEN used to authenticate to the current repository
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print the URL of the release draft
