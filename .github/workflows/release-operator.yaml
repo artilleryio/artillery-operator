@@ -32,14 +32,14 @@ jobs:
           echo $IMAGE_REPO_OWNER
           make docker-build docker-push
 
-      - name: Tag and push latest image
-        env:
-          VERSION: latest
-          IMAGE_REPO_OWNER: ghcr.io/artilleryio
-        run: |
-          echo $VERSION
-          echo $IMAGE_REPO_OWNER
-          make docker-tag docker-push
+      #      - name: Tag and push latest image
+      #        env:
+      #          VERSION: latest
+      #          IMAGE_REPO_OWNER: ghcr.io/artilleryio
+      #        run: |
+      #          echo $VERSION
+      #          echo $IMAGE_REPO_OWNER
+      #          make docker-tag docker-push
 
       - name: Create a release draft for the version tag
         id: create-release-draft
