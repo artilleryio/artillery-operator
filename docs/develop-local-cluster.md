@@ -87,12 +87,12 @@ The following command will build and push an operator image to the local registr
 `kind-registry:5000/artillery-operator:v0.0.1`:
 
 ```shell
-make docker-build docker-push IMG=kind-registry:5000/artillery-operator:v0.0.1
+IMAGE_REPO_OWNER=kind-registry:5000 make docker-build docker-push
 ```
 
 Then, run the following to deploy the operator to the K8s cluster specified in `~/.kube/config`. This will also install
 the RBAC manifests from config/rbac.
 
 ```shell
-make deploy IMG=kind-registry:5000/artillery-operator:v0.0.1
+make deploy IMG=kind-registry:5000/artillery-operator-alpha:latest
 ```
