@@ -14,6 +14,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        if: success() && startsWith(github.ref, 'refs/tags/')
+
+      - name: Set tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
       - name: Log in to registry
         # This is where you will update the PAT to GITHUB_TOKEN
@@ -21,7 +26,7 @@ jobs:
 
       - name: Build and push versioned image
         env:
-          VERSION: ${{ env.GITHUB_REF_NAME }}
+          VERSION: ${{ steps.vars.outputs.tag }}
           IMAGE_REPO_OWNER: ghcr.io/artilleryio
         run: |
           echo $VERSION
