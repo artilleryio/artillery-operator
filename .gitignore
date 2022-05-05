@@ -26,10 +26,6 @@ hack/**/node_modules
 /hack/aws/eksctl/kubeconfig.eksctl.lock
 /hack/prom-pushgateway/kube-prometheus-main*
 
-# Ignore generated manifests.
-artillery-manifests/
-artillery-scripts/
-
 # editor and IDE paraphernalia
 .idea
 *.swp
