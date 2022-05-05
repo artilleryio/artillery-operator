@@ -27,6 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// ensureJob creates a Job that in turn creates the required worker Pods
+// to run load tests using an Artillery image.
 func (r *LoadTestReconciler) ensureJob(
 	ctx context.Context,
 	instance *lt.LoadTest,
@@ -64,6 +66,7 @@ func (r *LoadTestReconciler) ensureJob(
 	return nil, nil
 }
 
+// job creates a Job spec based on the LoadTest Custom Resource.
 func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 	var (
 		parallelism  int32 = 1
@@ -105,7 +108,7 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 							},
 							Args: []string{
 								"run",
-								"/data/test-script.yaml",
+								"/data/" + TestScriptFilename,
 							},
 							Env: append(
 								[]corev1.EnvVar{
@@ -121,10 +124,11 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 										},
 									},
 								},
-								r.TelemetryConfig.ToEnvVar()...,
+								r.TelemetryConfig.ToK8sEnvVar()...,
 							),
 						},
 					},
+					// Provides access to the ConfigMap holding the test script config
 					Volumes: []corev1.Volume{
 						{
 							Name: TestScriptVol,
@@ -147,6 +151,8 @@ func (r *LoadTestReconciler) job(v *lt.LoadTest) *v1.Job {
 	return job
 }
 
+// labels creates K8s labels used to organize
+// and categorize (scope and select) Load Test objects.
 func labels(v *lt.LoadTest, component string) map[string]string {
 	return map[string]string{
 		"artillery.io/test-name": v.Name,

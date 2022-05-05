@@ -17,9 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 type Payload struct {
 	ConfigMaps []string `json:"configMaps,omitempty"`
 }
@@ -65,6 +62,7 @@ type LoadTestSpec struct {
 	TestScript TestScript `json:"testScript"`
 }
 
+// LoadTestConditionType creates types for K8s Conditions created by the operator
 type LoadTestConditionType string
 
 // These are valid conditions of a load-test.
@@ -75,6 +73,7 @@ const (
 	LoadTestCompleted LoadTestConditionType = "Completed"
 )
 
+// LoadTestCondition provides a standard mechanism for higher-level status reporting
 type LoadTestCondition struct {
 	// Type of job condition, Progressing, Complete or Failed.
 	Type LoadTestConditionType `json:"type"`
@@ -94,9 +93,9 @@ type LoadTestCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
-// LoadTestStatus defines the observed state of LoadTest
+// LoadTestStatus defines the observed state of LoadTest.
 type LoadTestStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make" to regenerate code after modifying this file.
 	Conditions []LoadTestCondition `json:"conditions,omitempty"`
 
 	// Represents time when the loadtest controller started processing a loadtest.
@@ -125,10 +124,10 @@ type LoadTestStatus struct {
 	Failed int32 `json:"failed,omitempty"`
 
 	// Formatted load test worker pod completions calculated from the underlying succeeded jobs vs configured
-	// job completions/parallelism
+	// job completions/parallelism.
 	Completions string `json:"completions,omitempty"`
 
-	// The image used to run the load tests
+	// The image used to run the load tests.
 	Image string `json:"image,omitempty"`
 }
 
@@ -140,7 +139,7 @@ type LoadTestStatus struct {
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environment`
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.status.image`,priority=10
 
-// LoadTest is the Schema for the loadtests API
+// LoadTest is the Schema for the loadTests API.
 type LoadTest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -151,7 +150,7 @@ type LoadTest struct {
 
 // +kubebuilder:object:root=true
 
-// LoadTestList contains a list of LoadTest
+// LoadTestList contains a list of LoadTest.
 type LoadTestList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

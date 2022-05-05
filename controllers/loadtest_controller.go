@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// LoadTestReconciler reconciles a LoadTest object
+// LoadTestReconciler reconciles a LoadTest object.
 type LoadTestReconciler struct {
 	client.Client
 	Scheme          *runtime.Scheme
@@ -37,6 +37,14 @@ type LoadTestReconciler struct {
 	TelemetryConfig telemetry.Config
 	TelemetryClient posthog.Client
 }
+
+/*
+	This code relies on the kubebuilder library to toggle K8s controller features
+	including RBAC.
+
+	For more details, check the controller documentation:
+	https://www.kubebuilder.io/cronjob-tutorial/controller-overview.html
+*/
 
 // +kubebuilder:rbac:groups=loadtest.artillery.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=loadtest.artillery.io,resources=loadtests/status,verbs=get;update;patch

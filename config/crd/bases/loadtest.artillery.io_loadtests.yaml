@@ -36,7 +36,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: LoadTest is the Schema for the loadtests API
+        description: LoadTest is the Schema for the loadTests API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -99,7 +99,7 @@ spec:
             - testScript
             type: object
           status:
-            description: LoadTestStatus defines the observed state of LoadTest
+            description: LoadTestStatus defines the observed state of LoadTest.
             properties:
               active:
                 description: The number of actively running LoadTest worker pods.
@@ -114,12 +114,14 @@ spec:
                 type: string
               completions:
                 description: Formatted load test worker pod completions calculated
-                  from the underlying succeeded jobs vs configured job completions/parallelism
+                  from the underlying succeeded jobs vs configured job completions/parallelism.
                 type: string
               conditions:
                 description: 'Important: Run "make" to regenerate code after modifying
-                  this file'
+                  this file.'
                 items:
+                  description: LoadTestCondition provides a standard mechanism for
+                    higher-level status reporting
                   properties:
                     lastProbeTime:
                       description: Last time the condition was checked.
@@ -159,7 +161,7 @@ spec:
                 format: int32
                 type: integer
               image:
-                description: The image used to run the load tests
+                description: The image used to run the load tests.
                 type: string
               startTime:
                 description: Represents time when the loadtest controller started

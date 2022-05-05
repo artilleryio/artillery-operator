@@ -28,17 +28,21 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
+// PostHogToken is PostHog API token.
 const PostHogToken = "_uzX-_WJoVmE_tsLvu0OFD2tpd0HGz72D5sU1zM2hbs"
 
+// event describes a telemetry event.
 type event struct {
 	Name       string
 	Properties map[string]interface{}
 }
 
+// protectedDistinctId returns a hashed ID in a cryptographically secure way.
 func protectedDistinctId(cfg Config) (string, error) {
 	return machineid.ProtectedID(cfg.AppName)
 }
 
+// hashEncode returns a hashed value for a provided string.
 func hashEncode(v string) string {
 	h := sha1.New()
 	h.Write([]byte(v))
@@ -60,6 +64,7 @@ func getIPAddress() string {
 	return string(localAddr.IP)
 }
 
+// noopClient is no-op telemetry client used when telemetry is disabled.
 type noopClient struct{}
 
 func (n *noopClient) Close() error                                              { return nil }
@@ -68,6 +73,8 @@ func (n *noopClient) IsFeatureEnabled(_ string, _ string, _ bool) (bool, error) 
 func (n *noopClient) ReloadFeatureFlags() error                                 { return nil }
 func (n *noopClient) GetFeatureFlags() ([]posthog.FeatureFlag, error)           { return nil, nil }
 
+// NewClient returns a telemetry client based on the telemetry configuration.
+// This could either be a no-op client or a PostHog client.
 func NewClient(tCfg Config) (posthog.Client, error) {
 	if tCfg.Disable {
 		return &noopClient{}, nil
@@ -75,6 +82,7 @@ func NewClient(tCfg Config) (posthog.Client, error) {
 	return posthog.NewWithConfig(PostHogToken, posthog.Config{})
 }
 
+// enqueue enqueues a telemetry event.
 func enqueue(client posthog.Client, config Config, event event, logger logr.Logger) error {
 	properties := buildProperties(event.Properties, config)
 	if config.Debug {
@@ -98,12 +106,14 @@ func enqueue(client posthog.Client, config Config, event event, logger logr.Logg
 	return nil
 }
 
+// debugProperties logs telemetry events using a logger.
 func debugProperties(props map[string]interface{}, logger logr.Logger) {
 	for k, v := range props {
 		logger.Info("ARTILLERY_TELEMETRY_DEBUG=true", k, v)
 	}
 }
 
+// buildProperties returns default telemetry properties along with any extra provided properties.
 func buildProperties(extra map[string]interface{}, cfg Config) map[string]interface{} {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -127,6 +137,7 @@ func buildProperties(extra map[string]interface{}, cfg Config) map[string]interf
 	return properties
 }
 
+// Config defines telemetry configuration.
 type Config struct {
 	Disable     bool
 	Debug       bool
@@ -135,6 +146,7 @@ type Config struct {
 	WorkerImage string
 }
 
+// NewConfig return a new telemetry config, that include environment settings.
 func NewConfig(appName, version, workerImage string, logger logr.Logger) Config {
 	result := Config{
 		AppName:     appName,
@@ -153,7 +165,8 @@ func NewConfig(appName, version, workerImage string, logger logr.Logger) Config 
 	return result
 }
 
-func (t Config) ToEnvVar() []core.EnvVar {
+// ToK8sEnvVar converts telemetry config to K8s env var settings.
+func (t Config) ToK8sEnvVar() []core.EnvVar {
 	return []core.EnvVar{
 		{
 			Name:  "ARTILLERY_DISABLE_TELEMETRY",
