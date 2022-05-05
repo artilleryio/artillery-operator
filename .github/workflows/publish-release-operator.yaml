@@ -1,10 +1,9 @@
-name: tag-and-publish-operator
+name: publish-release-operator
 on:
-  push:
-    tags:
-      - v**
+  create:
+
 jobs:
-  tag-and-publish-operator-image:
+  publish-release-operator-image:
     runs-on: ubuntu-latest
 
     permissions:
@@ -41,3 +40,13 @@ jobs:
           echo $VERSION
           echo $IMAGE_REPO_OWNER
           make docker-tag docker-push
+
+      - name: Create a release draft for the operator image based on version tag
+        id: create-release-draft
+        uses: ecampidoglio/auto-release-draft@v1.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print the URL of the release draft
+        if: steps.create-release-draft.outputs.release-url != ''
+        run: echo ${{ steps.create-release-draft.outputs.release-url }}
