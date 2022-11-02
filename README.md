@@ -1,3 +1,9 @@
+# ⚠️ This project is no longer maintained
+
+We are working on adding Kubernetes support directly into the [Artillery CLI](https://github.com/artilleryio/artillery) instead.
+
+----
+
 [![Generic badge](https://img.shields.io/badge/Stage-Early%20Alpha-red.svg)](https://shields.io/)
 
 <img width="1012" alt="Kubernetes native load testing" src="assets/artillery-operator-header.png">
